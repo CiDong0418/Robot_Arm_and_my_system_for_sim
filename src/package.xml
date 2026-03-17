@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>Project</name>
+  <version>0.0.0</version>
+  <description>Simple ROS project</description>
+  <maintainer email="airobots@todo.todo">airobots</maintainer>
+  <license>TODO</license>
+
+  <!-- ROS 依赖 -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+</package>
+

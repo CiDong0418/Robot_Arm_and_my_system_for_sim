@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/aiRobots/Software/src/MotorUnion/Motor/motor/motor.cpp
+motor.h
+/home/aiRobots/Software/src/MotorUnion/Motor/motor/motor.h
+
+/home/aiRobots/Software/src/MotorUnion/Motor/motor/motor.h
+cmath
+-
+

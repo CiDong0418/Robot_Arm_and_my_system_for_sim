@@ -1,0 +1,47 @@
+cmake_minimum_required(VERSION 3.5)
+project(Project)
+# 找到子项目
+add_subdirectory(Manipulator)
+add_subdirectory(MotorUnion)
+add_subdirectory(Robot)
+add_subdirectory(Neck)
+# 找到 Poco 和 Eigen
+find_package(Poco REQUIRED Foundation Net)
+find_package(Eigen3 REQUIRED)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+)
+
+# 链接 Poco 库
+set(POCO_LIBS Poco::Net Poco::Foundation)
+
+# 可执行文件
+# add_executable(Project main.cpp)
+
+
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${CATKIN_DEVEL_PREFIX}/include 
+)
+add_executable(ProjectNode main.cpp)
+
+add_dependencies(ProjectNode robot_core_generate_messages_cpp)
+
+
+target_include_directories(ProjectNode PRIVATE ${CMAKE_SOURCE_DIR}/Robot)
+install(TARGETS ProjectNode
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+# 链接 Manipulator 库和 Poco
+target_link_libraries(ProjectNode
+  Manipulator   # 来自 src/Manipulator 子项目的库
+  MotorUnion    # 来自 src/MotorUnion 子项目的库
+  Robot         # 来自 src/Robot 子项目的库
+  Neck          # 来自 src/Neck 子项目的库
+  ${POCO_LIBS}
+  ${catkin_LIBRARIES}
+)
+
+

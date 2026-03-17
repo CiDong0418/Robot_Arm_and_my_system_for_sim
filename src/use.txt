@@ -1,0 +1,22 @@
+# 1. 開啟第一個視窗 開啟roscore
+cd Software
+source devel/setup.bash
+roscore
+# 2. 開啟第二個視窗 執行底層手臂運做
+cd Software
+source devel/setup.bash
+
+# 3. 確認手臂姿態是否正常？（左手線朝上 右手線朝下）急停是否打開？
+
+# 4. 使用 rosrun 執行 按 [P] [tab] [tab]
+# 格式: rosrun [Package名稱] [執行檔名稱]
+rosrun Project ProjectNode
+
+(出現 "兩手臂初始化完成" 在終端機)
+(如果終端一直運算但手沒動 可能急停開關沒開 或是 馬達沒連接上)
+
+# 5. 就可以直接開啟新終端機執行你的程式碼
+cd Software
+source devel/setup.bash
+python3 python_publisher.py
+

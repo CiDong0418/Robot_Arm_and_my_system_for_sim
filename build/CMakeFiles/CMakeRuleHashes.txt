@@ -1,0 +1,21 @@
+# Hashes of file build rules.
+7462ec6afc98d14b4731f1c608bc0f19 /home/aiRobots/Software/devel/include/robot_core/ArmBatchTransform.h
+abaf2f1437b013ea3cd5e0c556d8899c /home/aiRobots/Software/devel/include/robot_core/BatchTransform.h
+597581030755e664ec7f30d324e13613 /home/aiRobots/Software/devel/lib/python3/dist-packages/robot_core/srv/_ArmBatchTransform.py
+ae03dce719de2201fb77266e6c96c12f /home/aiRobots/Software/devel/lib/python3/dist-packages/robot_core/srv/_BatchTransform.py
+73f47143765c288cd653598c2ee29acf /home/aiRobots/Software/devel/lib/python3/dist-packages/robot_core/srv/__init__.py
+ad021093e74f2add6e233b62f2d15990 /home/aiRobots/Software/devel/share/common-lisp/ros/robot_core/srv/ArmBatchTransform.lisp
+4a532af0e262fc2a057d59c5be6ef117 /home/aiRobots/Software/devel/share/common-lisp/ros/robot_core/srv/BatchTransform.lisp
+9d13e4a57124e67ebfc75d090a944c21 /home/aiRobots/Software/devel/share/gennodejs/ros/robot_core/srv/ArmBatchTransform.js
+8023c2041386eae5170ebe3e5ccdcf9d /home/aiRobots/Software/devel/share/gennodejs/ros/robot_core/srv/BatchTransform.js
+5bf0bdf140c690aa88844c7c5acd083d /home/aiRobots/Software/devel/share/roseus/ros/robot_core/manifest.l
+6d1a22acc87b65c7e4ebde517a93345b /home/aiRobots/Software/devel/share/roseus/ros/robot_core/srv/ArmBatchTransform.l
+6451e34200fb6a21f93d1956a8394cac /home/aiRobots/Software/devel/share/roseus/ros/robot_core/srv/BatchTransform.l
+0a49ddf82d9cb50d176c85b31805402e Robot/CMakeFiles/_robot_core_generate_messages_check_deps_ArmBatchTransform
+7c5c62b5aca8081b6313763686e7a4f6 Robot/CMakeFiles/_robot_core_generate_messages_check_deps_BatchTransform
+49b67b47ce7ecb7715d5d57ea4ac42e6 Robot/CMakeFiles/clean_test_results
+78776aac77aa2fd3ea7e79a0deee0586 Robot/CMakeFiles/robot_core_generate_messages_cpp
+78776aac77aa2fd3ea7e79a0deee0586 Robot/CMakeFiles/robot_core_generate_messages_eus
+78776aac77aa2fd3ea7e79a0deee0586 Robot/CMakeFiles/robot_core_generate_messages_lisp
+78776aac77aa2fd3ea7e79a0deee0586 Robot/CMakeFiles/robot_core_generate_messages_nodejs
+78776aac77aa2fd3ea7e79a0deee0586 Robot/CMakeFiles/robot_core_generate_messages_py

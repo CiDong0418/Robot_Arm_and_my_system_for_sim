@@ -1,0 +1,53 @@
+
+
+cmake_minimum_required(VERSION 3.5)
+project(Robot)
+
+# 尋找依賴套件
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  geometry_msgs    # 必須加這個，因為 srv 裡面有 geometry_msgs/Point
+  message_generation # 必須加這個
+)
+add_service_files(
+  FILES
+  BatchTransform.srv
+)
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
+# 4. 在 catkin_package 加入 message_runtime
+catkin_package(
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime
+)
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+# 包含頭檔路徑
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${catkin_INCLUDE_DIRS}        # ROS 頭檔路徑
+  ${OpenCV_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+# 建立 Robot library
+add_library(Robot SHARED Robot.cpp)
+
+# 連結函式庫
+target_link_libraries(Robot
+  Manipulator
+  ${catkin_LIBRARIES}           # ROS 函式庫
+  ${OpenCV_LIBS}
+)
+
+# 設定 public include 目錄
+target_include_directories(Robot PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
