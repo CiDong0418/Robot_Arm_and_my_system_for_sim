@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>image</name>
+  <version>0.0.1</version>
+  <description>
+    頭部相機物體辨識套件：使用 GroundingDINO + RealSense D456
+    辨識指定物品並輸出其 3D 表面中心座標及半徑 R。
+  </description>
+
+  <maintainer email="cidongcheng@example.com">CiDongCheng</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+
+</package>

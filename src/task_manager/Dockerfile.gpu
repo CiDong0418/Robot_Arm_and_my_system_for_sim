@@ -1,0 +1,122 @@
+# =============================================================
+#  GPU-enabled ROS Noetic + CUDA 12.2 + GroundingDINO
+#  主機需求：RTX 3090 Ti，NVIDIA 驅動 >= 525（目前 535.183.01 ✅）
+#  相機支援：Intel RealSense D456 / D435i (USB 3.0)
+# =============================================================
+
+# ── Base Image ────────────────────────────────────────────────
+# CUDA 12.2 + cuDNN 8 + Ubuntu 20.04（與 ROS Noetic 匹配）
+FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu20.04
+
+# ── 環境變數 ──────────────────────────────────────────────────
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV ROS_DISTRO=noetic
+
+# ── 1. 基本工具 ───────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl wget git nano vim \
+    build-essential cmake \
+    python3-pip python3-dev python3-setuptools \
+    lsb-release gnupg2 ca-certificates \
+    usbutils libusb-1.0-0-dev \
+    libgl1-mesa-glx libglib2.0-0 \
+    net-tools iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── 2. 安裝 ROS Noetic ────────────────────────────────────────
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" \
+    > /etc/apt/sources.list.d/ros-latest.list' && \
+    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ros-noetic-desktop-full \
+    python3-rosdep \
+    python3-rosinstall \
+    python3-rosinstall-generator \
+    python3-wstool \
+    python3-catkin-tools \
+    && rosdep init && rosdep update \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── 3. 安裝 Intel RealSense SDK 2.0 ──────────────────────────
+# 支援 D456 和 D435i
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp \
+    | tee /etc/apt/keyrings/librealsense.pgp > /dev/null && \
+    echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] \
+    https://librealsense.intel.com/Debian/apt-repo focal main" \
+    | tee /etc/apt/sources.list.d/librealsense.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    librealsense2-dkms \
+    librealsense2-utils \
+    librealsense2-dev \
+    librealsense2-dbg \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── 4. 安裝 PyTorch (CUDA 12.2) ───────────────────────────────
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir typing-extensions==4.8.0 && \
+    pip3 install --no-cache-dir \
+    torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# ── 5. 安裝 GroundingDINO 相依套件 ────────────────────────────
+RUN pip3 install --no-cache-dir \
+    "transformers>=4.38.0" \
+    "accelerate" \
+    "timm" \
+    "supervision>=0.18.0" \
+    "addict" \
+    "yapf" \
+    "pycocotools" \
+    "opencv-python-headless" \
+    "numpy<2.0" \
+    "Pillow"
+
+# ── 6. 安裝 RealSense Python wrapper ──────────────────────────
+RUN pip3 install --no-cache-dir pyrealsense2
+
+# ── 7. 安裝 ROS Python 套件 ───────────────────────────────────
+RUN pip3 install --no-cache-dir \
+    "openai==1.12.0" \
+    "pydantic<2.6.0" \
+    python-dotenv \
+    colorama \
+    rospkg \
+    catkin-pkg
+
+ENV TORCH_CUDA_ARCH_LIST="8.6"
+# ── 8. 安裝 GroundingDINO（原始碼安裝，支援 CUDA 編譯）────────
+# 使用 CUDA 編譯 MultiScaleDeformableAttention，速度比 CPU 快 10x
+RUN git clone https://github.com/IDEA-Research/GroundingDINO.git /opt/GroundingDINO && \
+    cd /opt/GroundingDINO && \
+    pip3 install --no-cache-dir -e . && \
+    echo "GroundingDINO installed"
+
+# ── 9. 下載 GroundingDINO Swin-B 模型權重 ─────────────────────
+RUN mkdir -p /opt/GroundingDINO/weights && \
+    wget -q --show-progress \
+    -O /opt/GroundingDINO/weights/groundingdino_swinb_cogcoor.pth \
+    "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha2/groundingdino_swinb_cogcoor.pth" && \
+    echo "Model weights downloaded"
+
+# ── 10. 建立 Catkin Workspace ─────────────────────────────────
+WORKDIR /root/catkin_ws
+RUN mkdir -p /root/catkin_ws/src && \
+    /bin/bash -c "source /opt/ros/noetic/setup.bash && \
+    cd /root/catkin_ws && catkin_make"
+
+# ── 11. 設定環境 ──────────────────────────────────────────────
+RUN echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
+    echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc && \
+    echo "export PYTHONPATH=\$PYTHONPATH:/opt/GroundingDINO" >> /root/.bashrc && \
+    echo "export CUDA_VISIBLE_DEVICES=0" >> /root/.bashrc
+
+# ── 12. 複製 RealSense udev rules（讓容器內 USB 相機可用）─────
+# 注意：實際 udev 在主機上設定，這裡備份 rules 方便參考
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    udev && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root/catkin_ws
+CMD ["bash"]

@@ -1,0 +1,24 @@
+# voice package 設定檔
+# 請在此填入你的 API Key 與路徑
+
+# ── OpenAI Whisper API ──────────────────────────────────────
+openai:
+  api_key: "sk-..."          # ← 填入你的 OpenAI API Key
+  model: "whisper-1"
+  language: "zh"             # 中文
+
+# ── Porcupine 喚醒詞 ───────────────────────────────────────
+porcupine:
+  access_key: "YOUR_PICOVOICE_ACCESS_KEY"   # ← 到 console.picovoice.ai 申請
+  keyword_path: ""           # ← 填入「阿布」.ppn 檔案的絕對路徑
+                             #   例如 "/root/catkin_ws/src/voice/config/abu_zh_linux.ppn"
+  sensitivity: 0.4           # 靈敏度 0.0~1.0（越高越容易觸發）
+
+# ── 錄音設定 ───────────────────────────────────────────────
+audio:
+  sample_rate: 16000         # Whisper 需要 16kHz
+  channels: 1
+  chunk_size: 480            # webrtcvad 支援 10/20/30ms frame（16kHz × 30ms = 480）
+  vad_mode: 3                # webrtcvad 積極度 0~3（3 最積極過濾噪音）
+  silence_duration_sec: 1.5  # 靜音超過幾秒視為說完話
+  max_record_sec: 15.0       # 最長錄音時間（防止沒偵測到停止）

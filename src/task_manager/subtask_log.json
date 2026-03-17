@@ -1,0 +1,35 @@
+[
+  {
+    "timestamp": "2026-03-17 10:49:25",
+    "parent_task_id": 1,
+    "parent_task_name": "Deliver Water Bottle to Living Room Table",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "Water Bottle",
+        "location_id": 6,
+        "hand_used": "Right_Arm",
+        "estimated_duration": 5,
+        "dependencies": [],
+        "description": "Pick up the Water Bottle from Kitchen Fridge (location 6).",
+        "parent_id": 1,
+        "global_id": "1_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "Water Bottle",
+        "location_id": 1,
+        "hand_used": "Right_Arm",
+        "estimated_duration": 5,
+        "dependencies": [
+          "1_1"
+        ],
+        "description": "Deliver and place the Water Bottle on Living Room Table 1 (location 1).",
+        "parent_id": 1,
+        "global_id": "1_2"
+      }
+    ]
+  }
+]

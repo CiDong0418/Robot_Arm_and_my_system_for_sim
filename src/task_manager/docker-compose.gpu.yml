@@ -1,0 +1,93 @@
+version: "3.8"
+
+# =============================================================
+#  GPU-enabled ROS Noetic + GroundingDINO + RealSense
+#  使用方式：在主機上執行 docker compose up -d
+#  需求：主機安裝 nvidia-container-toolkit
+# =============================================================
+
+services:
+  ros_gpu:
+    # ── 建置設定 ──────────────────────────────────────────────
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: ros_noetic_gpu:latest
+    container_name: aiRobots_Dong
+
+    # ── GPU 直通（RTX 3090 Ti）────────────────────────────────
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility, video]
+
+    # ── 網路：使用主機網路（ROS 節點通訊最簡單）──────────────
+    network_mode: host
+
+    # ── 環境變數 ──────────────────────────────────────────────
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_HOSTNAME=localhost
+      - PYTHONPATH=/opt/GroundingDINO
+
+    # ── Volume 掛載（保留程式碼，重建容器不會遺失）────────────
+    volumes:
+      # 程式碼目錄（與主機共享，編輯立即生效）
+      - /root/catkin_ws/src:/root/catkin_ws/src
+
+      # 模型權重（避免每次重建都重新下載）
+      - grounding_dino_weights:/opt/GroundingDINO/weights
+
+      # X11 顯示（可在容器內開啟 GUI 視窗，例如 cv2.imshow）
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+      # RealSense udev 資料（讓 pyrealsense2 能找到相機）
+      - /run/udev:/run/udev:ro
+
+    # ── 裝置直通 ──────────────────────────────────────────────
+    devices:
+      # NVIDIA GPU
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+      - /dev/nvidia-modeset:/dev/nvidia-modeset
+
+      # Intel RealSense（USB 設備，連接後才會出現）
+      # D456 / D435i 通常是 /dev/video0 ~ /dev/video5
+      # 如果接了相機但沒出現，改用下方 device_cgroup_rules
+
+    # ── 允許 USB 相機動態接入（D456 / D435i）─────────────────
+    device_cgroup_rules:
+      - "c 81:* rmw"    # video devices (UVC)
+      - "c 189:* rmw"   # USB serial devices (RealSense)
+
+    # ── 特權模式（讓容器能存取 USB 和 udev）─────────────────
+    privileged: false
+    security_opt:
+      - seccomp:unconfined
+
+    # ── IPC（ROS shared memory 需要）─────────────────────────
+    ipc: host
+    pid: host
+
+    stdin_open: true
+    tty: true
+
+    # ── 健康檢查 ──────────────────────────────────────────────
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import torch; assert torch.cuda.is_available()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ── 具名 Volume（模型權重持久化）──────────────────────────────
+volumes:
+  grounding_dino_weights:
+    driver: local

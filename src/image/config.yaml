@@ -1,0 +1,24 @@
+# cup_detector 設定檔
+# 修改此檔案可調整偵測行為，不需要改動主程式
+
+# GroundingDINO 模型路徑
+model:
+  config:   "/opt/GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py"
+  weights:  "/opt/GroundingDINO/weights/groundingdino_swinb_cogcoor.pth"
+  device:   "cuda"        # "cuda" 或 "cpu"
+
+# 偵測目標（可改成其他物體，如 "bottle . mug . glass"）
+detection:
+  text_prompt:    "cup"
+  box_threshold:  0.30    # bounding box 信心度門檻 (0~1)
+  text_threshold: 0.25    # 文字對應信心度門檻 (0~1)
+
+# Intel RealSense D456 相機串流設定
+camera:
+  color_width:   1280
+  color_height:  720
+  depth_width:   1280
+  depth_height:  720
+  fps:           30
+  depth_min_m:   0.1     # 最小有效深度 (公尺)
+  depth_max_m:   5.0     # 最大有效深度 (公尺)

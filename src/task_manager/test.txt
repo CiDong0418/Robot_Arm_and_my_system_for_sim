@@ -1,0 +1,79 @@
+📍 可用地點 (Available Locations):
+  1.  Living Room Table 1
+  2.  Living Room Table 2
+  3.  Living Room Sofa 1
+  4.  Living Room Sofa 2
+  5.  Living Room Cabinet
+  6.  Kitchen Fridge
+  7.  Kitchen Table 1
+  8.  Kitchen Table 2
+  9.  Room A Bed
+  10. Room A Desk
+  11. Room B Bed
+  12. Room B Desk
+
+🤖 基礎單線任務 (測試基本依賴關係)
+＃ 從廚房冰箱拿一瓶水，放到客廳桌子1上。
+👉 Get a bottle of water from the Kitchen Fridge and put it on Living Room Table 1.
+
+把客廳桌子2上的空罐子收走，放到廚房桌子1上。
+👉 Take the empty can from Living Room Table 2 and place it on Kitchen Table 1.
+
+把客廳櫃子上的書拿過來，放到房間A的書桌上。
+👉 Take the book from the Living Room Cabinet and put it on Room A Desk.
+
+⚖️ 雙目標任務 (最適合測試雙臂平行交錯)
+＃ 把廚房桌子1上的蘋果放到客廳桌子1，把廚房桌子2上的橘子放到客廳桌子2。
+👉 Put the apple from Kitchen Table 1 on Living Room Table 1, and put the orange from Kitchen Table 2 on Living Room Table 2.
+
+把客廳桌子1上的遙控器放到客廳沙發1，把客廳桌子2上的雜誌放到客廳沙發2。
+👉 Put the remote control from Living Room Table 1 on Living Room Sofa 1, and put the magazine from Living Room Table 2 on Living Room Sofa 2.
+
+把房間A書桌上的藥放到客廳桌子1，把房間B書桌上的維他命放到客廳桌子2。
+👉 Put the medicine from Room A Desk on Living Room Table 1, and put the vitamins from Room B Desk on Living Room Table 2.
+
+把客廳沙發1上的枕頭放到房間A的床上，把客廳沙發2上的毯子放到房間B的床上。
+👉 Put the pillow from Living Room Sofa 1 on Room A Bed, and put the blanket from Living Room Sofa 2 on Room B Bed.
+
+🧠 強依賴任務 (動作之間有真實邏輯依賴，無法拆開或重排)
+
+任務A：倒牛奶服務
+＃ 從廚房冰箱拿牛奶，從客廳櫃子拿杯子，在廚房桌子1把牛奶倒進杯子裡，然後把倒好的杯子送到客廳桌子1，最後把牛奶放回廚房冰箱。
+👉 Get the milk from the Kitchen Fridge and get the cup from the Living Room Cabinet. Pour the milk into the cup at Kitchen Table 1. Then bring the cup with milk to Living Room Table 1. Finally, put the milk bottle back into the Kitchen Fridge.
+
+任務B：泡藥水準備
+從廚房冰箱拿出藥水，從廚房桌子2拿出空杯子，在廚房桌子1把藥水倒入杯子，然後把杯子送到房間A書桌，再把藥水瓶放回廚房冰箱。
+👉 Take the medicine bottle from the Kitchen Fridge and take the empty cup from Kitchen Table 2. Pour the medicine into the cup at Kitchen Table 1. Deliver the cup to Room A Desk. Then return the medicine bottle to the Kitchen Fridge.
+
+任務C：準備點心盤
+從廚房冰箱拿蘋果，從廚房桌子1拿盤子，在廚房桌子1把蘋果放到盤子上，再從客廳櫃子拿餐巾紙放到盤子旁邊，最後把整個盤子端到客廳桌子2。
+👉 Get the apple from the Kitchen Fridge and get the plate from Kitchen Table 1. Place the apple onto the plate at Kitchen Table 1. Then get a napkin from the Living Room Cabinet and place it next to the plate. Finally, bring the plate with apple and napkin to Living Room Table 2.
+
+任務D：換床頭書
+從房間A書桌拿新書，把房間A床上的舊書拿走放到客廳桌子1，再把新書放到房間A床上，最後把客廳桌子2上的書籤放到新書裡（放在房間A床上）。
+👉 Pick up the new book from Room A Desk. Take the old book from Room A Bed and put it on Living Room Table 1. Place the new book on Room A Bed. Then take the bookmark from Living Room Table 2 and place it with the new book on Room A Bed.
+
+任務E：整理急救包
+從客廳櫃子拿急救箱，放到廚房桌子1打開；從廚房冰箱拿冰敷袋放入急救箱；再從客廳桌子1拿繃帶放入急救箱；最後把急救箱關起來送到房間B書桌。
+👉 Get the first-aid kit from the Living Room Cabinet and bring it to Kitchen Table 1. Take the ice pack from the Kitchen Fridge and put it into the first-aid kit. Then take the bandage from Living Room Table 1 and put it into the first-aid kit. Finally, bring the first-aid kit to Room B Desk.
+
+
+任務一：早餐準備流程
+從廚房冰箱拿牛奶，放到廚房桌子1；再從客廳櫃子拿杯子，放到廚房桌子1；最後從廚房桌子2拿麵包，也放到廚房桌子1。
+👉 Get the milk from the Kitchen Fridge and put it on Kitchen Table 1. Then get the cup from the Living Room Cabinet and put it on Kitchen Table 1. Finally, get the bread from Kitchen Table 2 and put it on Kitchen Table 1.
+
+任務二：房間整理流程
+把客廳桌子1上的書放到房間A書桌，再把客廳桌子2上的眼鏡放到房間A書桌，然後把客廳沙發1上的枕頭放到房間A床上，最後把客廳沙發2上的毯子也放到房間A床上。
+👉 Put the book from Living Room Table 1 on Room A Desk. Then put the glasses from Living Room Table 2 on Room A Desk. Next, put the pillow from Living Room Sofa 1 on Room A Bed. Finally, put the blanket from Living Room Sofa 2 on Room A Bed.
+
+任務三：藥品配送流程
+從廚房冰箱拿取藥水，放到房間A書桌；再從客廳櫃子拿OK繃，放到房間A書桌；接著把房間B床上的空瓶子拿走，放到廚房桌子1。
+👉 Take the medicine bottle from the Kitchen Fridge and put it on Room A Desk. Then take the band-aid from the Living Room Cabinet and put it on Room A Desk. After that, take the empty bottle from Room B Bed and place it on Kitchen Table 1.
+
+任務四：跨房搬運流程
+把房間A書桌上的報告拿到客廳桌子1；再把房間B書桌上的文件也拿到客廳桌子1；然後把客廳桌子1上的遙控器放到客廳沙發1；最後把客廳桌子2上的雜誌放到客廳沙發2。
+👉 Bring the report from Room A Desk to Living Room Table 1. Then bring the documents from Room B Desk to Living Room Table 1. Next, put the remote control from Living Room Table 1 on Living Room Sofa 1. Finally, put the magazine from Living Room Table 2 on Living Room Sofa 2.
+
+任務五：廚房整理流程
+把廚房桌子2上的盤子放到廚房桌子1；把廚房桌子2上的碗也放到廚房桌子1；再把廚房冰箱裡的果汁拿出來放到廚房桌子1；最後把客廳桌子1上的空杯子拿走放到廚房桌子2。
+👉 Move the plate from Kitchen Table 2 to Kitchen Table 1. Also move the bowl from Kitchen Table 2 to Kitchen Table 1. Then take the juice from the Kitchen Fridge and put it on Kitchen Table 1. Finally, take the empty cup from Living Room Table 1 and put it on Kitchen Table 2.

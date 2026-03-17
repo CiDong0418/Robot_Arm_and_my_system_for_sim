@@ -1,0 +1,27 @@
+<launch>
+  <!-- ═══════════════════════════════════════════════════════════════
+       send_task_directly.launch
+       任務生成完整流程：
+         1. main_input_node   — 接收使用者輸入（語音 / 文字指令）
+         2. high_level_node   — 大任務分析（LLM 解析高層指令）
+         3. subtask_node      — 小任務拆解（分解成子任務）
+         4. scheduler_node    — DABC 排程最佳化
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- 1. 接收輸入指令 -->
+  <node pkg="task_manager" type="main_input_node.py" name="main_input_node"
+        output="screen" required="true" />
+
+  <!-- 2. 大任務分析 -->
+  <node pkg="task_manager" type="high_level_node.py" name="high_level_node"
+        output="screen" required="true" />
+
+  <!-- 3. 小任務拆解 -->
+  <node pkg="task_manager" type="subtask_node.py" name="subtask_node"
+        output="screen" required="true" />
+
+  <!-- 4. DABC 排程 -->
+  <node pkg="dabc_optimizer" type="scheduler_node.py" name="scheduler_node"
+        output="screen" required="true" />
+
+</launch>
