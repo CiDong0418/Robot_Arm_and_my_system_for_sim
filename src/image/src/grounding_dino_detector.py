@@ -14,6 +14,7 @@ from typing import List, Dict
 import cv2
 import numpy as np
 import torch
+import warnings
 from PIL import Image as PILImage
 
 from groundingdino.util.inference import load_model, predict
@@ -50,6 +51,25 @@ class GroundingDINODetector:
         """
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if device == "cuda":
+            if not torch.cuda.is_available():
+                warnings.warn(
+                    "要求使用 CUDA，但目前不可用，已自動改用 CPU 推論。"
+                )
+                device = "cpu"
+            else:
+                try:
+                    import groundingdino
+                    has_custom_ops = hasattr(groundingdino, "_C")
+                except Exception:
+                    has_custom_ops = False
+
+                if not has_custom_ops:
+                    warnings.warn(
+                        "GroundingDINO custom ops (_C) 不可用，將使用 PyTorch fallback 於 GPU 推論。"
+                    )
+
         self._device = device
         self._model  = load_model(config_path, weights_path, device=device)
 

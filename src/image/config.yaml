@@ -3,8 +3,8 @@
 
 # GroundingDINO 模型路徑
 model:
-  config:   "/opt/GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py"
-  weights:  "/opt/GroundingDINO/weights/groundingdino_swinb_cogcoor.pth"
+  config:   "/home/aiRobots/GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py"
+  weights:  "/home/aiRobots/GroundingDINO/weights/groundingdino_swinb_cogcoor.pth"
   device:   "cuda"        # "cuda" 或 "cpu"
 
 # 偵測目標（可改成其他物體，如 "bottle . mug . glass"）

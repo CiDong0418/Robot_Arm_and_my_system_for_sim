@@ -5,18 +5,11 @@ head_xyz_detection.py
 ROS 節點：頭部相機物體 XYZ + 半徑 R 偵測服務。
 
 職責：
-    - 相機啟動後即持續顯示即時畫面（背景執行緒）
-    - 訂閱 /head_detection/target，收到物品名稱後執行偵測
-    - 偵測成功：在畫面上顯示 BBox 停留 BBOX_DISPLAY_SEC 秒後消失
-    - 發布結果到 /head_detection/xyz、/head_detection/radius、/head_detection/status
-
-訂閱:
-    /head_detection/target  (std_msgs/String)  — 要辨識的物品名稱
-
-發布:
-    /head_detection/xyz     (geometry_msgs/PointStamped)
-    /head_detection/radius  (std_msgs/Float32)
-    /head_detection/status  (std_msgs/String)
+    - 訂閱 ROS Topic 獲取即時畫面與對齊的深度圖（不再獨佔 USB 硬體）
+    - 自動獲取相機內參 (CameraInfo)
+    - 持續顯示即時畫面（背景執行緒）
+    - 訂閱 /head_detection/target 觸發 GroundingDINO 推論
+    - 發布 3D 結果到 /head_detection/xyz 等頻道（單位：mm）
 """
 import os
 import sys
@@ -27,310 +20,239 @@ import yaml
 import cv2
 import numpy as np
 import rospy
+import message_filters
 from std_msgs.msg import String, Float32
 from geometry_msgs.msg import PointStamped
+from sensor_msgs.msg import Image, CameraInfo
+from cv_bridge import CvBridge, CvBridgeError
 
-# ── src/ 模組路徑 ──
 _PKG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _SRC_DIR  = os.path.join(_PKG_DIR, "src")
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from realsense_stream         import RealSenseStream
-from grounding_dino_detector  import GroundingDINODetector
 from depth_geometry           import (get_median_depth_in_box,
                                       compute_object_radius_3d,
                                       get_surface_xyz)
 
-# ── 常數 ──
-BBOX_DISPLAY_SEC = 3.0      # BBox 在畫面上顯示幾秒
+try:
+    from grounding_dino_detector import GroundingDINODetector
+    _GROUNDING_IMPORT_ERROR = None
+except Exception as exc:
+    GroundingDINODetector = None
+    _GROUNDING_IMPORT_ERROR = exc
 
-# ──────────────────────────── 預設設定 ────────────────────────────────────
+BBOX_DISPLAY_SEC = 3.0
+
 _DEFAULT_CONFIG = {
     "grounding_dino": {
         "config":  "/opt/GroundingDINO/groundingdino/config/GroundingDINO_SwinB_cfg.py",
         "weights": "/opt/GroundingDINO/weights/groundingdino_swinb_cogcoor.pth",
+        "device":  "auto",
     },
     "detection": {
         "box_threshold":  0.30,
         "text_threshold": 0.25,
         "max_attempts":   10,
-    },
-    "camera": {
-        "color_width":  1280,
-        "color_height": 720,
-        "depth_width":  1280,
-        "depth_height": 720,
-        "fps":          30,
-        "warmup_frames": 30,
-    },
+    }
 }
 
-
 def _load_config(yaml_path: str) -> dict:
-    """讀取 config.yaml，不存在時使用預設值。"""
     if not os.path.isfile(yaml_path):
-        rospy.logwarn(f"[head_xyz] 找不到 config.yaml（{yaml_path}），使用預設值。")
         return _DEFAULT_CONFIG
     with open(yaml_path, "r") as f:
         cfg = yaml.safe_load(f) or {}
+
+    # 相容舊版 key：model -> grounding_dino
+    if "grounding_dino" not in cfg and "model" in cfg:
+        model_cfg = cfg.get("model", {})
+        cfg["grounding_dino"] = {
+            "config": model_cfg.get("config", _DEFAULT_CONFIG["grounding_dino"]["config"]),
+            "weights": model_cfg.get("weights", _DEFAULT_CONFIG["grounding_dino"]["weights"]),
+            "device": model_cfg.get("device", _DEFAULT_CONFIG["grounding_dino"]["device"]),
+        }
+
     for section, defaults in _DEFAULT_CONFIG.items():
         cfg.setdefault(section, {})
         for k, v in defaults.items():
             cfg[section].setdefault(k, v)
     return cfg
 
-
-# ──────────────────────────── 視覺化輔助 ──────────────────────────────────
-def _draw_bbox(frame: np.ndarray,
-               x1: int, y1: int, x2: int, y2: int,
-               phrase: str, confidence: float,
-               xyz: tuple, radius_m: float) -> None:
-    """在影像上繪製 BBox、XYZ 標注（上方）與半徑 R 標注（下方）。"""
-    GREEN  = (0, 255, 0)
-    ORANGE = (0, 200, 255)
-    font   = cv2.FONT_HERSHEY_SIMPLEX
-    fs     = 0.55
-
+def _draw_bbox(frame: np.ndarray, x1: int, y1: int, x2: int, y2: int,
+               phrase: str, confidence: float, xyz_mm: tuple, radius_mm: float) -> None:
+    GREEN, ORANGE, font, fs = (0, 255, 0), (0, 200, 255), cv2.FONT_HERSHEY_SIMPLEX, 0.55
     cv2.rectangle(frame, (x1, y1), (x2, y2), GREEN, 2)
-
-    # 上方：物品名稱 + XYZ
-    label = (f"{phrase} {confidence:.2f} | "
-             f"X:{xyz[0]:.3f}m Y:{xyz[1]:.3f}m Z:{xyz[2]:.3f}m")
+    
+    label = f"{phrase} {confidence:.2f} | X:{xyz_mm[0]:.3f}mm Y:{xyz_mm[1]:.3f}mm Z:{xyz_mm[2]:.3f}mm"
     (tw, th), _ = cv2.getTextSize(label, font, fs, 1)
     cv2.rectangle(frame, (x1, y1 - th - 8), (x1 + tw + 4, y1), GREEN, -1)
-    cv2.putText(frame, label, (x1 + 2, y1 - 4),
-                font, fs, (0, 0, 0), 1, cv2.LINE_AA)
+    cv2.putText(frame, label, (x1 + 2, y1 - 4), font, fs, (0, 0, 0), 1, cv2.LINE_AA)
 
-    # 下方：半徑 R（橘黃色）
-    r_label = f"R = {radius_m*100:.1f} cm"
+    r_label = f"R = {radius_mm:.1f} mm"
     (rw, rh), _ = cv2.getTextSize(r_label, font, fs, 1)
     cv2.rectangle(frame, (x1, y2), (x1 + rw + 4, y2 + rh + 8), ORANGE, -1)
-    cv2.putText(frame, r_label, (x1 + 2, y2 + rh + 2),
-                font, fs, (0, 0, 0), 1, cv2.LINE_AA)
+    cv2.putText(frame, r_label, (x1 + 2, y2 + rh + 2), font, fs, (0, 0, 0), 1, cv2.LINE_AA)
 
-
-# ──────────────────────────── ROS 節點 ────────────────────────────────────
 class HeadXYZDetectionNode:
-    """頭部相機物體偵測 ROS 節點（含即時畫面顯示）。"""
-
     def __init__(self):
         rospy.init_node("head_xyz_detection", anonymous=False)
-
-        yaml_path = os.path.join(_PKG_DIR, "config.yaml")
-        cfg       = _load_config(yaml_path)
-
-        det_cfg  = cfg["detection"]
-        cam_cfg  = cfg["camera"]
-        dino_cfg = cfg["grounding_dino"]
-
-        self._box_thresh   = det_cfg["box_threshold"]
-        self._text_thresh  = det_cfg["text_threshold"]
-        self._max_attempts = det_cfg["max_attempts"]
+        cfg = _load_config(os.path.join(_PKG_DIR, "config.yaml"))
+        
+        self._box_thresh   = cfg["detection"]["box_threshold"]
+        self._text_thresh  = cfg["detection"]["text_threshold"]
+        self._max_attempts = cfg["detection"]["max_attempts"]
         self._has_display  = bool(os.environ.get("DISPLAY", ""))
+        self.bridge = CvBridge()
+        
+        self._latest_color, self._latest_depth = None, None
+        self._intrinsics_dict = None  # 改用純 Python 字典儲存相機內參
+        self._depth_scale = 0.001     # D400 系列對齊後深度單位預設為 1mm = 0.001m
+        self._camera_frame_id = "head_camera_color_optical_frame"
 
-        # ── 初始化相機 ──
-        rospy.loginfo("[head_xyz] 啟動 RealSense 相機...")
-        self._camera = RealSenseStream(
-            color_width   = cam_cfg["color_width"],
-            color_height  = cam_cfg["color_height"],
-            depth_width   = cam_cfg["depth_width"],
-            depth_height  = cam_cfg["depth_height"],
-            fps           = cam_cfg["fps"],
-            warmup_frames = cam_cfg["warmup_frames"],
-        )
-        self._camera.start()
-        rospy.loginfo("[head_xyz] 相機就緒。")
+        dino_cfg = cfg["grounding_dino"]
+        dino_config_path = dino_cfg["config"]
+        dino_weights_path = dino_cfg["weights"]
+        dino_device = dino_cfg.get("device", "auto")
+        if isinstance(dino_device, str):
+            dino_device = dino_device.strip().lower()
+            if dino_device in ("", "auto", "none"):
+                dino_device = None
 
-        # ── 初始化偵測器 ──
+        if not os.path.isfile(dino_config_path):
+            raise FileNotFoundError(f"[head_xyz] GroundingDINO config 不存在: {dino_config_path}")
+        if not os.path.isfile(dino_weights_path):
+            raise FileNotFoundError(f"[head_xyz] GroundingDINO weights 不存在: {dino_weights_path}")
+        if GroundingDINODetector is None:
+            raise RuntimeError(
+                f"[head_xyz] 無法載入 GroundingDINO 依賴：{_GROUNDING_IMPORT_ERROR}。"
+                "請先安裝 torch 與 groundingdino。"
+            )
+
         rospy.loginfo("[head_xyz] 載入 GroundingDINO 模型...")
         self._detector = GroundingDINODetector(
-            config_path  = dino_cfg["config"],
-            weights_path = dino_cfg["weights"],
+            config_path=dino_config_path,
+            weights_path=dino_weights_path,
+            device=dino_device,
         )
-        rospy.loginfo(f"[head_xyz] 模型就緒（device={self._detector.device}）。")
 
-        # ── 上次偵測結果（供顯示執行緒使用）──
-        # { 'bbox': (x1,y1,x2,y2), 'phrase': str, 'confidence': float,
-        #   'xyz': tuple, 'R': float, 'expire_at': float (time.time()) }
-        self._last_detection = None
-        self._detection_lock = threading.Lock()
+        self._last_detection, self._detection_lock = None, threading.Lock()
+        self._current_target, self._target_lock = None, threading.Lock()
 
-        # ── Publishers ──
-        self._pub_xyz    = rospy.Publisher("/head_detection/xyz",    PointStamped, queue_size=1)
-        self._pub_radius = rospy.Publisher("/head_detection/radius", Float32,       queue_size=1)
-        self._pub_status = rospy.Publisher("/head_detection/status", String,        queue_size=1)
+        # 發布與訂閱
+        self._pub_xyz    = rospy.Publisher("/head_detection/xyz", PointStamped, queue_size=1)
+        self._pub_radius = rospy.Publisher("/head_detection/radius", Float32, queue_size=1)
+        self._pub_status = rospy.Publisher("/head_detection/status", String, queue_size=1)
+        
+        rospy.Subscriber("/head_detection/target", String, self._on_target_received, queue_size=1)
+        rospy.Subscriber("/head_camera/color/camera_info", CameraInfo, self._camera_info_callback)
 
-        # ── Subscriber ──
-        rospy.Subscriber("/head_detection/target", String,
-                         self._on_target_received, queue_size=1)
+        # 時間同步影像流
+        color_sub = message_filters.Subscriber('/head_camera/color/image_raw', Image)
+        depth_sub = message_filters.Subscriber('/head_camera/aligned_depth_to_color/image_raw', Image)
+        self.ts = message_filters.ApproximateTimeSynchronizer([color_sub, depth_sub], queue_size=10, slop=0.1)
+        self.ts.registerCallback(self._sync_image_callback)
 
-        # ── 啟動即時畫面顯示執行緒 ──
         if self._has_display:
-            self._display_thread = threading.Thread(
-                target=self._display_loop, daemon=True)
-            self._display_thread.start()
-            rospy.loginfo("[head_xyz] 即時畫面顯示已啟動（按 q 可關閉視窗）。")
-        else:
-            rospy.logwarn("[head_xyz] 未偵測到 DISPLAY，跳過視窗顯示。")
+            threading.Thread(target=self._display_loop, daemon=True).start()
 
-        rospy.loginfo("[head_xyz] 節點就緒，等待 /head_detection/target 訊息。")
+        rospy.loginfo("[head_xyz] 系統就緒，等待相機畫面與辨識指令。")
 
-    # ── 即時畫面顯示執行緒 ────────────────────────────────────────────────
+    def _camera_info_callback(self, msg: CameraInfo):
+        """將 ROS CameraInfo 轉換為純 Python 字典，徹底解耦 pyrealsense2"""
+        if self._intrinsics_dict is None:
+            self._intrinsics_dict = {
+                'fx': msg.K[0], 'fy': msg.K[4],
+                'ppx': msg.K[2], 'ppy': msg.K[5]
+            }
+
+    def _sync_image_callback(self, color_msg, depth_msg):
+        try:
+            color_image = self.bridge.imgmsg_to_cv2(color_msg, "bgr8")
+            depth_image = self.bridge.imgmsg_to_cv2(depth_msg, "16UC1")
+
+            if color_msg.header.frame_id:
+                self._camera_frame_id = color_msg.header.frame_id
+            
+            self._latest_color, self._latest_depth = color_image, depth_image
+
+            with self._target_lock:
+                target = self._current_target
+                self._current_target = None 
+            if target:
+                self._run_detection(target, color_image, depth_image)
+        except CvBridgeError as e:
+            rospy.logerr(f"CV Bridge Error: {e}")
+
+    def _run_detection(self, target: str, color_image, depth_image):
+        if self._intrinsics_dict is None:
+            rospy.logwarn("[head_xyz] 尚未收到 CameraInfo，無法計算。")
+            return
+
+        detections = self._detector.detect(
+            color_image, target, 
+            box_threshold=self._box_thresh, text_threshold=self._text_thresh
+        )
+
+        if not detections:
+            self._publish_status(f"FAIL | 未偵測到 {target}")
+            return
+
+        best = max(detections, key=lambda d: d["confidence"])
+        x1, y1, x2, y2 = best["bbox"]
+
+        depth_median = get_median_depth_in_box(depth_image, x1, y1, x2, y2, self._depth_scale)
+        if depth_median is None: return
+
+        # 餵入純字典內參進行數學運算
+        xyz = get_surface_xyz(self._intrinsics_dict, x1, y1, x2, y2, depth_median)
+        R   = compute_object_radius_3d(self._intrinsics_dict, x1, y1, x2, y2, depth_median)
+        xyz_mm = (xyz[0] * 1000, xyz[1] * 1000, xyz[2] * 1000)
+        R_mm   = R * 1000
+        with self._detection_lock:
+            self._last_detection = {
+                "bbox": (x1, y1, x2, y2), "phrase": best["phrase"], 
+                "confidence": best["confidence"], "xyz_mm": xyz_mm, "R_mm": R_mm,
+                "expire_at": time.time() + BBOX_DISPLAY_SEC
+            }
+
+        self._publish_xyz(xyz_mm)
+        self._publish_radius(R_mm)
+        self._publish_status(f"OK | target={target} XYZ=({xyz_mm[0]:.3f}, {xyz_mm[1]:.3f}, {xyz_mm[2]:.3f})mm R={R_mm:.1f}mm")
 
     def _display_loop(self) -> None:
-        """
-        持續從相機取幀並顯示。
-        若目前有偵測結果且尚未過期（< BBOX_DISPLAY_SEC 秒），則疊加 BBox；
-        超過時間後自動清除，回到純畫面直到下次偵測。
-        """
         win = "Head Detection | press q to close"
         cv2.namedWindow(win, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(win, 1280, 720)
-
         while not rospy.is_shutdown():
-            frames = self._camera.get_aligned_frames()
-            if frames is None:
-                continue
-
-            color_image, _, _, _, _ = frames
-            display = color_image.copy()
-
-            # 疊加 BBox（若在有效期內）
+            if self._latest_color is None:
+                time.sleep(0.03); continue
+            
+            display = self._latest_color.copy()
             with self._detection_lock:
                 det = self._last_detection
-                if det is not None and time.time() < det["expire_at"]:
-                    x1, y1, x2, y2 = det["bbox"]
-                    _draw_bbox(display,
-                               x1, y1, x2, y2,
-                               det["phrase"], det["confidence"],
-                               det["xyz"],    det["R"])
-                    # 顯示倒數秒數
-                    remaining = det["expire_at"] - time.time()
-                    cv2.putText(display,
-                                f"BBox expires in {remaining:.1f}s",
-                                (10, 90), cv2.FONT_HERSHEY_SIMPLEX,
-                                0.7, (0, 255, 255), 2)
-                elif det is not None and time.time() >= det["expire_at"]:
-                    self._last_detection = None   # 過期清除
+                if det and time.time() < det["expire_at"]:
+                    _draw_bbox(display, *det["bbox"], det["phrase"], det["confidence"], det["xyz_mm"], det["R_mm"])
+                elif det and time.time() >= det["expire_at"]:
+                    self._last_detection = None
 
-            # 固定左上角提示
-            cv2.putText(display, "Waiting for detection target...",
-                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7, (200, 200, 200), 2)
-
-            try:
-                cv2.imshow(win, display)
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
-                    rospy.loginfo("[head_xyz] 使用者關閉顯示視窗。")
-                    cv2.destroyAllWindows()
-                    break
-            except cv2.error:
-                break
-
-    # ── Callback ──────────────────────────────────────────────────────────
-
-    def _on_target_received(self, msg: String) -> None:
-        target = msg.data.strip()
-        if not target:
-            rospy.logwarn("[head_xyz] 收到空字串，忽略。")
-            return
-
-        rospy.loginfo(f"[head_xyz] 開始偵測目標：'{target}'")
-
-        for attempt in range(1, self._max_attempts + 1):
-            frames = self._camera.get_aligned_frames()
-            if frames is None:
-                rospy.logwarn(f"[head_xyz] 第 {attempt} 幀取得失敗，跳過。")
-                continue
-
-            color_image, depth_image, depth_frame, intrinsics, depth_scale = frames
-
-            detections = self._detector.detect(
-                color_image, target,
-                box_threshold  = self._box_thresh,
-                text_threshold = self._text_thresh,
-            )
-
-            if not detections:
-                rospy.logdebug(f"[head_xyz] 第 {attempt} 幀未偵測到 '{target}'。")
-                continue
-
-            best = max(detections, key=lambda d: d["confidence"])
-            x1, y1, x2, y2 = best["bbox"]
-
-            depth_median = get_median_depth_in_box(
-                depth_image, x1, y1, x2, y2, depth_scale)
-            if depth_median is None:
-                rospy.logwarn(f"[head_xyz] 第 {attempt} 幀深度無效，繼續嘗試。")
-                continue
-
-            xyz = get_surface_xyz(intrinsics, x1, y1, x2, y2, depth_median)
-            R   = compute_object_radius_3d(intrinsics, x1, y1, x2, y2, depth_median)
-
-            # ── 更新顯示用偵測結果（停留 BBOX_DISPLAY_SEC 秒）──
-            with self._detection_lock:
-                self._last_detection = {
-                    "bbox":       (x1, y1, x2, y2),
-                    "phrase":     best["phrase"],
-                    "confidence": best["confidence"],
-                    "xyz":        xyz,
-                    "R":          R,
-                    "expire_at":  time.time() + BBOX_DISPLAY_SEC,
-                }
-
-            # ── 發布 ROS 結果 ──
-            self._publish_xyz(xyz, target)
-            self._publish_radius(R)
-            self._publish_status(
-                f"OK | target={target} conf={best['confidence']:.3f} "
-                f"X={xyz[0]:.3f}m Y={xyz[1]:.3f}m Z={xyz[2]:.3f}m "
-                f"R={R*100:.1f}cm attempt={attempt}"
-            )
-
-            rospy.loginfo(
-                f"[head_xyz] 偵測成功（第 {attempt} 幀）| "
-                f"conf={best['confidence']:.3f} | "
-                f"XYZ=({xyz[0]:.3f}, {xyz[1]:.3f}, {xyz[2]:.3f})m | "
-                f"R={R*100:.1f}cm"
-            )
-            return
-
-        fail_msg = f"FAIL | target='{target}' | 嘗試 {self._max_attempts} 幀均未偵測到目標"
-        rospy.logwarn(f"[head_xyz] {fail_msg}")
-        self._publish_status(fail_msg)
-
-    # ── 發布輔助方法 ──────────────────────────────────────────────────────
-
-    def _publish_xyz(self, xyz: tuple, frame_id: str = "camera_color_optical_frame") -> None:
-        msg = PointStamped()
-        msg.header.stamp    = rospy.Time.now()
-        msg.header.frame_id = frame_id
-        msg.point.x = xyz[0]
-        msg.point.y = xyz[1]
-        msg.point.z = xyz[2]
-        self._pub_xyz.publish(msg)
-
-    def _publish_radius(self, radius_m: float) -> None:
-        msg = Float32()
-        msg.data = float(radius_m)
-        self._pub_radius.publish(msg)
-
-    def _publish_status(self, text: str) -> None:
-        msg = String()
-        msg.data = text
-        self._pub_status.publish(msg)
-
-    # ── 清理 ──────────────────────────────────────────────────────────────
-
-    def shutdown(self) -> None:
-        rospy.loginfo("[head_xyz] 節點關閉，停止相機。")
-        self._camera.stop()
+            cv2.imshow(win, display)
+            if cv2.waitKey(1) & 0xFF == ord('q'): break
+            time.sleep(0.03)
         cv2.destroyAllWindows()
 
+    def _on_target_received(self, msg: String) -> None:
+        with self._target_lock: self._current_target = msg.data.strip()
 
-# ──────────────────────────── 程式入口 ────────────────────────────────────
+    def _publish_xyz(self, xyz: tuple, frame_id: str = None) -> None:
+        msg = PointStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = frame_id if frame_id else self._camera_frame_id
+        msg.point.x, msg.point.y, msg.point.z = xyz
+        self._pub_xyz.publish(msg)
+
+    def _publish_radius(self, r: float) -> None: self._pub_radius.publish(Float32(data=float(r)))
+    def _publish_status(self, text: str) -> None: self._pub_status.publish(String(data=text))
+    def shutdown(self) -> None: cv2.destroyAllWindows()
+
 if __name__ == "__main__":
     node = HeadXYZDetectionNode()
     rospy.on_shutdown(node.shutdown)

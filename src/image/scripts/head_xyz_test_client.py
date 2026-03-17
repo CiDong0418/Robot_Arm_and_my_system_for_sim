@@ -73,13 +73,13 @@ class HeadXYZTestClient:
     def _cb_xyz(self, msg: PointStamped) -> None:
         print(f"\n{'='*52}")
         print(f"  [XYZ] 表面中心座標（相機座標系）")
-        print(f"  X = {msg.point.x: .4f} m")
-        print(f"  Y = {msg.point.y: .4f} m")
-        print(f"  Z = {msg.point.z: .4f} m")
+        print(f"  X = {msg.point.x: .3f} mm")
+        print(f"  Y = {msg.point.y: .3f} mm")
+        print(f"  Z = {msg.point.z: .3f} mm")
         print(f"{'='*52}")
 
     def _cb_radius(self, msg: Float32) -> None:
-        print(f"  [R]   半徑 = {msg.data*100:.2f} cm  ({msg.data:.4f} m)")
+        print(f"  [R]   半徑 = {msg.data:.3f} mm")
 
     def _cb_status(self, msg: String) -> None:
         status = msg.data
