@@ -36,6 +36,22 @@ class SchedulerNode:
         
         rospy.loginfo("[Scheduler] Ready. Collecting tasks... Call 'start_scheduling' to optimize.")
 
+    @staticmethod
+    def normalize_task_fields(task):
+        normalized = dict(task)
+
+        object_name = normalized.get('object') or normalized.get('target_object')
+        if object_name:
+            normalized.setdefault('object', object_name)
+            normalized.setdefault('target_object', object_name)
+
+        hand_name = normalized.get('hand') or normalized.get('hand_used')
+        if hand_name:
+            normalized.setdefault('hand', hand_name)
+            normalized.setdefault('hand_used', hand_name)
+
+        return normalized
+
     def task_callback(self, msg):
         """接收不斷進來的任務並累積
         這一個部份就是只要接到topic上面的小任務就會先存在buffer裡面
@@ -46,6 +62,7 @@ class SchedulerNode:
             new_tasks = json.loads(msg.data)
             # 將新任務加入 buffer
             for task in new_tasks:
+                task = self.normalize_task_fields(task)
                 # 為了防止重複 ID，這邊可以做個檢查，這裡先假設 ID 唯一
                 self.task_buffer.append(task)
                 
@@ -74,7 +91,8 @@ class SchedulerNode:
                     'hand_used': task.get('hand_used', None),
                     'dependencies': global_deps,
                     'action_type': task.get('action_type', 'PICK'),
-                    'location_id': task.get('location_id', 1)  # 執行此動作的地點ID (1-12)，預設為 1
+                    'location_id': task.get('location_id', 1),  # 執行此動作的地點ID (1-12)，預設為 1
+                    'target_object': task.get('target_object', task.get('object'))
                 }
                 
             rospy.loginfo(f"[Scheduler] Received batch. Total tasks in buffer: {len(self.task_buffer)}")
@@ -99,6 +117,7 @@ class SchedulerNode:
                     rospy.loginfo(f"[Scheduler] 🔄 Pulled {len(old_tasks)} unexecuted tasks from execution queue.")
                     # 將舊任務加進 buffer 及 lookup，準備跟新任務混和排程
                     for task in old_tasks:
+                        task = self.normalize_task_fields(task)
                         self.task_buffer.append(task)
                         
                         t_id = task['global_id']
@@ -108,7 +127,8 @@ class SchedulerNode:
                             'hand_used': task.get('hand_used', None),
                             'dependencies': task.get('dependencies', []),
                             'action_type': task.get('action_type', 'PICK'),
-                            'location_id': task.get('location_id', 1)
+                            'location_id': task.get('location_id', 1),
+                            'target_object': task.get('target_object', task.get('object'))
                         }
         except Exception as e:
             # 如果 node 還沒啟動或是找不到 service，就當作沒有舊任務
@@ -152,7 +172,7 @@ class SchedulerNode:
             # 實際專案建議優化這裡的查找效率
             original_task = next((t for t in self.task_buffer if t['global_id'] == tid), None)
             if original_task:
-                optimized_tasks.append(original_task)
+                optimized_tasks.append(self.normalize_task_fields(original_task))
 
         # 5. 發布結果
         json_output = json.dumps(optimized_tasks)

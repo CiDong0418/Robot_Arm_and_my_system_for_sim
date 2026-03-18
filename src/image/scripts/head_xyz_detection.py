@@ -42,7 +42,7 @@ except Exception as exc:
     GroundingDINODetector = None
     _GROUNDING_IMPORT_ERROR = exc
 
-BBOX_DISPLAY_SEC = 3.0
+BBOX_DISPLAY_SEC = 10.0
 
 _DEFAULT_CONFIG = {
     "grounding_dino": {

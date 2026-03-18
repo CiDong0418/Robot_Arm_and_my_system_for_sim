@@ -10,6 +10,8 @@ project(task_execution)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  std_srvs
+  image
 )
 
 ## System dependencies are found with CMake's conventions
@@ -104,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES task_execution
-#  CATKIN_DEPENDS rospy std_msgs
+#  CATKIN_DEPENDS rospy std_msgs std_srvs image
 #  DEPENDS system_lib
 )
 
@@ -160,6 +162,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/execution_node.py
+  scripts/action_dispatcher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

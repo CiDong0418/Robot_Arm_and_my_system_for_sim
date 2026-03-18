@@ -14,7 +14,7 @@ class TaskExecutionNode:
         
         # 機器人狀態: 0 (閒置), 1 (執行中)
         self.robot_status = 0
-        
+
         # 訂閱 /optimized_schedule (接收 DABC 排好的任務列表)
         rospy.Subscriber("/optimized_schedule", String, self.schedule_callback)
         
@@ -31,12 +31,40 @@ class TaskExecutionNode:
         
         # 定期檢查是否可以派發任務給機器人
         self.timer = rospy.Timer(rospy.Duration(0.5), self.try_dispatch)
+
+    @staticmethod
+    def normalize_task_fields(task_data):
+        normalized = dict(task_data)
+
+        object_name = normalized.get('object') or normalized.get('target_object')
+        if object_name:
+            normalized.setdefault('object', object_name)
+            normalized.setdefault('target_object', object_name)
+
+        hand_name = normalized.get('hand') or normalized.get('hand_used')
+        if hand_name:
+            normalized.setdefault('hand', hand_name)
+            normalized.setdefault('hand_used', hand_name)
+
+        return normalized
         
     def schedule_callback(self, msg):
         try:
             tasks = json.loads(msg.data)
+
+            if not isinstance(tasks, list):
+                rospy.logerr('[TaskExecution] optimized_schedule 格式錯誤，需為 list')
+                return
+
+            normalized_tasks = []
+            for task in tasks:
+                if not isinstance(task, dict):
+                    rospy.logwarn(f"[TaskExecution] Skip invalid task type: {type(task)}")
+                    continue
+                normalized_tasks.append(self.normalize_task_fields(task))
+
             # 這裡接收到的是「包含未執行舊任務 + 新增任務」的全新 DABC 排程結果
-            self.task_queue = collections.deque(tasks)
+            self.task_queue = collections.deque(normalized_tasks)
             rospy.loginfo(f"[TaskExecution] 📥 Received optimized schedule with {len(self.task_queue)} tasks.")
         except Exception as e:
             rospy.logerr(f"[TaskExecution] JSON Parse Error: {e}")
@@ -52,7 +80,7 @@ class TaskExecutionNode:
         unexecuted = list(self.task_queue)
         
         # 把尚未執行的任務轉成字串
-        tasks_json = json.dumps(unexecuted)
+        tasks_json = json.dumps(unexecuted, ensure_ascii=False)
         
         # 立即清空佇列，等待 DABC 混和新舊任務後排出來的最佳版本
         self.task_queue.clear()
