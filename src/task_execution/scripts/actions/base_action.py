@@ -1,17 +1,262 @@
 from abc import ABC, abstractmethod
+from typing import Sequence
+
+import rospy
 
 from .action_runtime import get_action_runtime
 
+
 class BaseAction(ABC):
     """
-    所有機器人動作的基礎父類別 (Abstract Base Class)
+    所有機器人動作的基礎父類別 (Abstract Base Class)。
+
+    備註：
+    - 各 Action 子類別只需要關注自身流程（execute）。
+    - 欄位解析、座標服務呼叫、座標轉換等共用功能統一放在這裡。
     """
+
     def __init__(self, task_data: dict):
+        """初始化每個動作共用的任務資料與執行介面。"""
         self.task_data = task_data
         self.action_type = task_data.get("action_type", "UNKNOWN")
         self.global_id = task_data.get("global_id", "N/A")
         self.robot_control, self.camera_transfer = get_action_runtime()
 
+    def _resolve_first_value(self, *keys, default=None):
+        """
+        依照 keys 優先順序取第一個可用欄位值。
+
+        - 會略過 None 與空字串。
+        - 若都找不到，回傳 default。
+        """
+        for key in keys:
+            value = self.task_data.get(key)
+            if value is None:
+                continue
+            if isinstance(value, str):
+                value = value.strip()
+                if not value:
+                    continue
+            return value
+        return default
+
+    def _resolve_object_name(self):
+        """取得目標物名稱，兼容 object/target_object/item_name 欄位。"""
+        return self._resolve_first_value("object", "target_object", "item_name")
+
+    def _resolve_hand_name(self):
+        """
+        取得手臂名稱並做標準化。
+
+        例：left_arm -> left、right_arm -> right。
+        """
+        hand_name = self._resolve_first_value("hand", "hand_used")
+        if not isinstance(hand_name, str):
+            return hand_name
+
+        hand_map = {
+            "left_arm": "left",
+            "right_arm": "right",
+            "left": "left",
+            "right": "right",
+        }
+        return hand_map.get(hand_name.lower(), hand_name) #return type is str(hand_name)
+
+    def _resolve_location_id(self):
+        """取得位置欄位，兼容 location_id/location。"""
+        return self._resolve_first_value("location_id", "location")
+
+    def _resolve_camera_id(self, default=0) -> int:
+        """
+        取得 camera_id 並轉成 int。
+
+        若欄位格式錯誤，會記錄警告並回退到 default。
+        """
+        camera_id = self.task_data.get("camera_id", default)
+        try:
+            return int(camera_id)
+        except (TypeError, ValueError):
+            rospy.logwarn(f"[{self.action_type}] camera_id 格式錯誤 ({camera_id})，改用預設值 {default}")
+            return int(default)
+
+    def _resolve_object_xyz_service_name(self, camera_id=0) -> str:
+        """
+        根據 camera_id 解析要呼叫的座標服務名稱。
+
+        解析順序：
+        1) /task_execution/object_xyz_service_name_by_camera/<camera_id>
+        2) /task_execution/object_xyz_service_name_by_camera (dict, key 可為字串或數字)
+        3) /task_execution/object_xyz_service_name (預設)
+        """
+        default_service = rospy.get_param(
+            "/task_execution/object_xyz_service_name",
+            "/head_detection/get_object_xyz",
+        )
+
+        service_name = rospy.get_param(f"/task_execution/object_xyz_service_name_by_camera/{camera_id}", "")
+        if isinstance(service_name, str) and service_name.strip():
+            return service_name.strip()
+
+        service_map = rospy.get_param("/task_execution/object_xyz_service_name_by_camera", {})
+        if isinstance(service_map, dict):
+            mapped = service_map.get(str(camera_id), service_map.get(camera_id))
+            if isinstance(mapped, str) and mapped.strip():
+                return mapped.strip()
+
+        return default_service
+
+    def _request_object_xyz(self, object_name: str, camera_id=0):
+        """
+        呼叫視覺服務取得物件座標。
+
+        參數：
+        - object_name: 要查詢的目標物名稱。
+        - camera_id: 用來選擇要呼叫哪一個座標 service。
+
+        回傳：
+        - 成功時回傳 GetObjectXYZResponse。
+        if not target_name:
+            return GetObjectXYZResponse(
+                success=False,
+                message="target_name is empty",
+                x=0.0,
+                y=0.0,
+                z=0.0,
+                radius=0.0,
+                frame_id="",
+            )
+        - 失敗時回傳 None。
+        """
+        if not object_name:
+            rospy.logerr(f"[{self.action_type}] object_name 為空，無法呼叫座標服務")
+            return None
+
+        service_name = self._resolve_object_xyz_service_name(camera_id=camera_id)
+        timeout_sec = float(rospy.get_param("/task_execution/object_xyz_timeout_sec", 8.0))
+
+        try:
+            rospy.wait_for_service(service_name, timeout=timeout_sec)
+        except rospy.ROSException:
+            rospy.logerr(f"[{self.action_type}] 等待 service {service_name} 逾時")
+            return None
+
+        try:
+            from image.srv import GetObjectXYZ, GetObjectXYZRequest
+        except Exception as error:
+            rospy.logerr(f"[{self.action_type}] 載入 GetObjectXYZ service 介面失敗: {error}")
+            return None
+
+        try:
+            service_proxy = rospy.ServiceProxy(service_name, GetObjectXYZ)
+            request = GetObjectXYZRequest(target_name=object_name, timeout_sec=timeout_sec)
+            response = service_proxy(request)
+        except rospy.ServiceException as error:
+            rospy.logerr(f"[{self.action_type}] 呼叫 {service_name} 失敗: {error}")
+            return None
+
+        if not response.success:
+            rospy.logerr(f"[{self.action_type}] 物件 '{object_name}' 座標取得失敗: {response.message}")
+            return None
+
+        return response# return type is GetObjectXYZResponse
+
+    def _to_world_xyz(self, camera_xyz_mm: Sequence[float], camera_id=0):
+        """
+        將相機座標（mm）轉為世界座標（mm）。
+
+        - 若關閉 /task_execution/use_camera_transfer，直接回傳原始座標。
+        - 若轉換失敗，會記錄警告並回傳原始座標。
+        """
+        camera_xyz_list = list(camera_xyz_mm)
+        if len(camera_xyz_list) < 3:
+            rospy.logwarn(f"[{self.action_type}] camera_xyz_mm 維度不足，改用原始資料: {camera_xyz_list}")
+            return camera_xyz_list
+
+        camera_xyz_list = [
+            float(camera_xyz_list[0]),
+            float(camera_xyz_list[1]),
+            float(camera_xyz_list[2]),
+        ]
+
+        use_camera_transfer = bool(rospy.get_param("/task_execution/use_camera_transfer", True))
+        if not use_camera_transfer:
+            return camera_xyz_list
+
+        try:
+            world_xyz = self.camera_transfer.list_transform_points(camera_id, camera_xyz_list)
+            if world_xyz and len(world_xyz) >= 3:
+                return [float(world_xyz[0]), float(world_xyz[1]), float(world_xyz[2])]
+        except Exception as error:
+            rospy.logwarn(f"[{self.action_type}] camera_transfer 轉換失敗，改用原始座標: {error}")
+
+        return camera_xyz_list
+
+    def right_arm_initial_position(self):
+        """右手回到初始位置的快捷方式。"""
+        robot_control.pos_single_move("right", 0.0, 140.0, 0.0,  420.0, -130.0, -30.0)
+        
+    
+    def left_arm_initial_position(self):
+        """左手回到初始位置的快捷方式。"""
+        robot_control.pos_single_move("left", -180.0, 35.0, 0.0,  420.0, 130.0, -130.0)
+    
+    def both_arms_initial_position(self):
+        robot_control.initial_position() # 移動到初始位置
+    
+    def open_gripper(self, arm):
+        robot_control.open_gripper(arm)
+
+    def close_gripper(self, arm):
+        robot_control.close_gripper(arm)
+
+    def degree_gripper_control(self, arm, angle):
+        robot_control.gripper_control(arm, angle)
+
+    def arm_pos_move_horizontal(self, arm, x_mm, y_mm, z_mm):
+        if arm == "left":
+            if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
+                robot_control.pos_single_move("left", -180, 0.0, 0.0, x_mm, y_mm, z_mm)
+            elif y_mm >= -250 and x_mm < 680: # 左手前方限制45
+                robot_control.pos_single_move("left", -180, 45.0, 0.0, x_mm, y_mm, z_mm)
+            # elif y_mm < -200 and y_mm > -400 : # 左手極限位置22.5
+            #     slope = ((-400) - (-200)) / (640 - 720) # y = mx + b
+            #     line_y = slope * (x_mm - 720) - 200
+            #     if y_mm <= line_y:
+            #         robot_control.pos_single_move("left", -180+67.5, 35, 0.0, x_mm, y_mm, z_mm)
+            else:
+                rospy.logwarn(f"[{self.action_type}] 目標位置超出左手可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
+                time.sleep(2.0)
+        elif arm == "right":
+            if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
+                robot_control.pos_single_move("right", 0.0, (180), 0.0, x_mm, y_mm, z_mm)
+            elif y_mm >= -200 and x_mm < 700: # 右手前方限制45
+                robot_control.pos_single_move("right", 0.0, (180-45), 0.0, x_mm, y_mm, z_mm)
+            elif y_mm < -200 and y_mm > -400 : # 右手極限位置22.5
+                slope = ((-400) - (-200)) / (640 - 720) # y = mx + b
+                line_y = slope * (x_mm - 720) - 200
+                if y_mm <= line_y:
+                    robot_control.pos_single_move("right", 0.0, (180-67.5), 0.0, x_mm, y_mm, z_mm)
+            else:
+                rospy.logwarn(f"[{self.action_type}] 目標位置超出右手可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
+                time.sleep(2.0) 
+            
+    
+    def arm_pos_move_vertical(self, arm, x_mm, y_mm, z_mm):
+        if arm == "right":
+            if x_mm > 200 and x_mm < 550 and y_mm > -300 and y_mm < -20 and z_mm > -350 and z_mm < -150: # 右手垂直區域限制
+                robot_control.pos_single_move("right", 95.0, 0.0, -90.0, x_mm, y_mm, z_mm)
+        elif arm == "left":
+            if x_mm > 200 and x_mm < 550 and y_mm < 300 and y_mm > 20 and z_mm > -350 and z_mm < -150: # 左手垂直區域限制
+                robot_control.pos_single_move("left", -95.0, 0.0, -90.0,  x_mm, y_mm, z_mm)
+        else:
+            rospy.logwarn(f"[{self.action_type}] 目標位置超出可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
+            time.sleep(2.0)
+
+    def dual_arm_move(self,left_oy, left_xyz_mm,right_oy, right_xyz_mm):
+        robot_control.pos_dual_move(
+            -180.0, left_oy, 0.0,  left_xyz_mm[0], left_xyz_mm[1], left_xyz_mm[2],
+             0.0, (180-right_oy), 0.0,  right_xyz_mm[0], right_xyz_mm[1], right_xyz_mm[2]
+        )
     @abstractmethod
     def execute(self) -> bool:
         """
