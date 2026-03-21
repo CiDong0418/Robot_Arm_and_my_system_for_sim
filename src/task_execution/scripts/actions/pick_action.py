@@ -70,6 +70,9 @@ class PickAction(BaseAction):
                 world_x = world_x - 25
                 world_y = world_y + 35
                 world_z = world_z - 40
+
+            self.arm_have_object[hand] = obj
+
             
         # 參考：
         # self.robot_control.single_arm_initial_position(hand)
@@ -103,6 +106,7 @@ class PickAction(BaseAction):
                 world_x = world_x - 35
                 world_y = world_y + 35
                 world_z = world_z - 50
+            self.arm_have_object[hand] = obj
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義 {obj} 的 PICK 動作，僅記錄座標")
 

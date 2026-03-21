@@ -78,6 +78,9 @@ class PlaceAction(BaseAction):
         right_hand_initial_x = 420.0
         right_hand_initial_y = -130.0
         right_hand_initial_z = -130.0
+        left_hand_initial_x = 420.0
+        left_hand_initial_y = 130.0
+        left_hand_initial_z = -130.0
 
         if obj == "cup":
             move_out = 70.0
@@ -94,11 +97,12 @@ class PlaceAction(BaseAction):
                 self.right_arm_initial_position()
             elif hand == "left":
                 self.arm_pos_move_horizontal(hand, table_x - move_out, table_y + move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - right_hand_initial_x) / 2 + right_hand_initial_x
-                mid_y = ((table_y + move_out) - right_hand_initial_y) / 2 + right_hand_initial_y
-                mid_z = ((target_z + 50) - right_hand_initial_z) / 2 + right_hand_initial_z
+                mid_x = ((table_x - move_out) - left_hand_initial_x) / 2 + left_hand_initial_x
+                mid_y = ((table_y + move_out) - left_hand_initial_y) / 2 + left_hand_initial_y
+                mid_z = ((target_z + 50) - left_hand_initial_z) / 2 + left_hand_initial_z
                 self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
                 self.left_arm_initial_position()
+            self.arm_have_object[hand] = None
 
         elif obj in ["cola", "juice", "water", "tea"]:
             move_out = 50.0
@@ -115,11 +119,12 @@ class PlaceAction(BaseAction):
                 self.right_arm_initial_position()
             elif hand == "left":
                 self.arm_pos_move_horizontal(hand, table_x - move_out, table_y + move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - right_hand_initial_x) / 2 + right_hand_initial_x
-                mid_y = ((table_y + move_out) - right_hand_initial_y) / 2 + right_hand_initial_y
-                mid_z = ((target_z + 50) - right_hand_initial_z) / 2 + right_hand_initial_z
+                mid_x = ((table_x - move_out) - left_hand_initial_x) / 2 + left_hand_initial_x
+                mid_y = ((table_y + move_out) - left_hand_initial_y) / 2 + left_hand_initial_y
+                mid_z = ((target_z + 50) - left_hand_initial_z) / 2 + left_hand_initial_z
                 self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
                 self.left_arm_initial_position()
+            self.arm_have_object[hand] = None
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義物件 {obj} 的 PLACE 動作，先略過動作控制")
             return False

@@ -26,6 +26,11 @@ class BaseAction(ABC):
         # "pick_table_id": None
     }
 
+    arm_have_object = {
+        "left": None,
+        "right": None,
+    }
+
     def __init__(self, task_data: dict):
         """初始化每個動作共用的任務資料與執行介面。"""
         self.task_data = task_data

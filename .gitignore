@@ -1,3 +1,7 @@
 .env
 __pycache__/
 *.pyc
+build/
+devel/
+subtask_log.json
+src/task_manager/subtask_log.json

@@ -10,7 +10,7 @@ from actions.place_action import PlaceAction
 ACTION_REGISTRY = {
     "PICK": PickAction,
     "PLACE": PlaceAction,
-    # "POUR": PourAction,
+    "POUR": PourAction,
     # "HANDOVER": HandoverAction,
     # "STORE_ON_TRAY": StoreOnTrayAction,
     # "RETRIEVE_FROM_TRAY": RetrieveFromTrayAction,
