@@ -4,11 +4,12 @@ import rospy
 from std_msgs.msg import String, Int32
 
 from actions.pick_action import PickAction
+from actions.place_action import PlaceAction
 
 # 建立動作字串與 Class 的映射表
 ACTION_REGISTRY = {
     "PICK": PickAction,
-    # "PLACE": PlaceAction,
+    "PLACE": PlaceAction,
     # "POUR": PourAction,
     # "HANDOVER": HandoverAction,
     # "STORE_ON_TRAY": StoreOnTrayAction,

@@ -163,6 +163,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/execution_node.py
   scripts/action_dispatcher.py
+  scripts/mock_optimized_schedule_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

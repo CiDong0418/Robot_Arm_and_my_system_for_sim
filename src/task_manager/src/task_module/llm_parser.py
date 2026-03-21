@@ -125,7 +125,11 @@ Each task object MUST have these fields:
                                Include: initial locations → intermediate steps → final positions.
                                Be explicit about which step depends on which previous step.
 - `involved_items`  (Array)    Every object the robot touches. Each entry:
-    - `item_name`   (String)   Object name, or special type: "pour_at", "destination", "return_to", "User"
+  - `item_name`   (String)   Object name, or special type: "pour_at", "destination", "return_to", "User"
+                 IMPORTANT naming rule:
+                 - Real physical object names MUST be lowercase (e.g., "cola", "milk", "cup", "medicine bottle").
+                 - Do NOT output capitalized object names like "Cola" or "Milk".
+                 - Keep special tokens exactly as specified above.
     - `location`    (String)   MUST be one of the 12 location names above.
     - `location_id` (Integer)  MUST be the corresponding ID from the table above.
 - `time_constraints` (Object)

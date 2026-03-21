@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Sequence
+import time
+import threading
+from types import SimpleNamespace
 
 import rospy
+from std_msgs.msg import String, Float32
+from geometry_msgs.msg import PointStamped
 
 from .action_runtime import get_action_runtime
 
@@ -14,6 +19,12 @@ class BaseAction(ABC):
     - 各 Action 子類別只需要關注自身流程（execute）。
     - 欄位解析、座標服務呼叫、座標轉換等共用功能統一放在這裡。
     """
+    # Class Attribute
+    pick_shared_memory = {
+        # "object": None,
+        # "pick_xyz": [0.0, 0.0, 0.0],
+        # "pick_table_id": None
+    }
 
     def __init__(self, task_data: dict):
         """初始化每個動作共用的任務資料與執行介面。"""
@@ -21,6 +32,11 @@ class BaseAction(ABC):
         self.action_type = task_data.get("action_type", "UNKNOWN")
         self.global_id = task_data.get("global_id", "N/A")
         self.robot_control, self.camera_transfer = get_action_runtime()
+        self.table_heights = {
+            1: 709.0,
+            2: 709.0,
+            3: 850.0
+        }
 
     def _resolve_first_value(self, *keys, default=None):
         """
@@ -105,6 +121,106 @@ class BaseAction(ABC):
 
         return default_service
 
+    def _resolve_object_xyz_topic_prefix(self, camera_id=0) -> str:
+        """
+        根據 camera_id 解析偵測 topic 前綴。
+
+        解析順序：
+        1) /task_execution/object_xyz_topic_prefix_by_camera/<camera_id>
+        2) /task_execution/object_xyz_topic_prefix_by_camera (dict)
+        3) /task_execution/object_xyz_topic_prefix (預設 /head_detection)
+        """
+        default_prefix = rospy.get_param(
+            "/task_execution/object_xyz_topic_prefix",
+            "/head_detection",
+        )
+
+        prefix = rospy.get_param(f"/task_execution/object_xyz_topic_prefix_by_camera/{camera_id}", "")
+        if isinstance(prefix, str) and prefix.strip():
+            return prefix.strip()
+
+        prefix_map = rospy.get_param("/task_execution/object_xyz_topic_prefix_by_camera", {})
+        if isinstance(prefix_map, dict):
+            mapped = prefix_map.get(str(camera_id), prefix_map.get(camera_id))
+            if isinstance(mapped, str) and mapped.strip():
+                return mapped.strip()
+
+        return default_prefix
+
+    def _request_object_xyz_via_topic(self, object_name: str, camera_id=0):
+        prefix = self._resolve_object_xyz_topic_prefix(camera_id=camera_id)
+        timeout_sec = float(rospy.get_param("/task_execution/object_xyz_timeout_sec", 8.0))
+
+        target_topic = f"{prefix}/target"
+        xyz_topic = f"{prefix}/xyz"
+        radius_topic = f"{prefix}/radius"
+        status_topic = f"{prefix}/status"
+
+        state = {
+            "xyz": None,
+            "radius": 0.0,
+            "status": None,
+        }
+        done_event = threading.Event()
+
+        def _cb_xyz(msg: PointStamped):
+            state["xyz"] = (
+                float(msg.point.x),
+                float(msg.point.y),
+                float(msg.point.z),
+                msg.header.frame_id,
+            )
+
+        def _cb_radius(msg: Float32):
+            state["radius"] = float(msg.data)
+
+        def _cb_status(msg: String):
+            state["status"] = msg.data.strip()
+            done_event.set()
+
+        sub_xyz = rospy.Subscriber(xyz_topic, PointStamped, _cb_xyz, queue_size=1)
+        sub_radius = rospy.Subscriber(radius_topic, Float32, _cb_radius, queue_size=1)
+        sub_status = rospy.Subscriber(status_topic, String, _cb_status, queue_size=1)
+        target_pub = rospy.Publisher(target_topic, String, queue_size=1)
+
+        try:
+            rospy.sleep(0.1)
+            target_pub.publish(String(data=object_name))
+
+            if not done_event.wait(timeout=timeout_sec):
+                rospy.logerr(f"[{self.action_type}] topic 模式等待 {status_topic} 逾時")
+                return None
+
+            status_text = state["status"] or "FAIL | no status"
+            if not status_text.startswith("OK"):
+                rospy.logerr(f"[{self.action_type}] topic 模式辨識失敗: {status_text}")
+                return None
+
+            # topic 之間沒有跨 topic 順序保證：status 可能比 xyz 先到
+            # 這裡給一個短暫緩衝等待 xyz，避免偶發競態造成誤判失敗
+            xyz_wait_deadline = time.time() + min(0.8, timeout_sec)
+            while state["xyz"] is None and time.time() < xyz_wait_deadline and not rospy.is_shutdown():
+                rospy.sleep(0.02)
+
+            if state["xyz"] is None:
+                rospy.logerr(f"[{self.action_type}] topic 模式缺少 xyz 資料（status={status_text}）")
+                return None
+
+            x_value, y_value, z_value, frame_id = state["xyz"]
+            return SimpleNamespace(
+                success=True,
+                message=status_text,
+                x=x_value,
+                y=y_value,
+                z=z_value,
+                radius=float(state["radius"]),
+                frame_id=frame_id,
+            )
+        finally:
+            sub_xyz.unregister()
+            sub_radius.unregister()
+            sub_status.unregister()
+
     def _request_object_xyz(self, object_name: str, camera_id=0):
         """
         呼叫視覺服務取得物件座標。
@@ -130,6 +246,10 @@ class BaseAction(ABC):
         if not object_name:
             rospy.logerr(f"[{self.action_type}] object_name 為空，無法呼叫座標服務")
             return None
+
+        transport = str(rospy.get_param("/task_execution/object_xyz_transport", "topic")).strip().lower()
+        if transport == "topic":
+            return self._request_object_xyz_via_topic(object_name=object_name, camera_id=camera_id)
 
         service_name = self._resolve_object_xyz_service_name(camera_id=camera_id)
         timeout_sec = float(rospy.get_param("/task_execution/object_xyz_timeout_sec", 8.0))
@@ -158,7 +278,7 @@ class BaseAction(ABC):
             rospy.logerr(f"[{self.action_type}] 物件 '{object_name}' 座標取得失敗: {response.message}")
             return None
 
-        return response# return type is GetObjectXYZResponse
+        return response  # return type is GetObjectXYZResponse
 
     def _to_world_xyz(self, camera_xyz_mm: Sequence[float], camera_id=0):
         """
@@ -193,31 +313,31 @@ class BaseAction(ABC):
 
     def right_arm_initial_position(self):
         """右手回到初始位置的快捷方式。"""
-        robot_control.pos_single_move("right", 0.0, 140.0, 0.0,  420.0, -130.0, -30.0)
+        self.robot_control.pos_single_move("right", 0.0, 140.0, 0.0, 420.0, -130.0, -130.0)
         
     
     def left_arm_initial_position(self):
         """左手回到初始位置的快捷方式。"""
-        robot_control.pos_single_move("left", -180.0, 35.0, 0.0,  420.0, 130.0, -130.0)
+        self.robot_control.pos_single_move("left", -180.0, 35.0, 0.0, 420.0, 130.0, -130.0)
     
     def both_arms_initial_position(self):
-        robot_control.initial_position() # 移動到初始位置
+        self.robot_control.initial_position()  # 移動到初始位置
     
     def open_gripper(self, arm):
-        robot_control.open_gripper(arm)
+        self.robot_control.open_gripper(arm)
 
     def close_gripper(self, arm):
-        robot_control.close_gripper(arm)
+        self.robot_control.close_gripper(arm)
 
     def degree_gripper_control(self, arm, angle):
-        robot_control.gripper_control(arm, angle)
+        self.robot_control.gripper_control(arm, angle)
 
     def arm_pos_move_horizontal(self, arm, x_mm, y_mm, z_mm):
         if arm == "left":
             if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
-                robot_control.pos_single_move("left", -180, 0.0, 0.0, x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("left", -180, 0.0, 0.0, x_mm, y_mm, z_mm)
             elif y_mm >= -250 and x_mm < 680: # 左手前方限制45
-                robot_control.pos_single_move("left", -180, 45.0, 0.0, x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("left", -180, 45.0, 0.0, x_mm, y_mm, z_mm)
             # elif y_mm < -200 and y_mm > -400 : # 左手極限位置22.5
             #     slope = ((-400) - (-200)) / (640 - 720) # y = mx + b
             #     line_y = slope * (x_mm - 720) - 200
@@ -228,14 +348,14 @@ class BaseAction(ABC):
                 time.sleep(2.0)
         elif arm == "right":
             if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
-                robot_control.pos_single_move("right", 0.0, (180), 0.0, x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("right", 0.0, (180), 0.0, x_mm, y_mm, z_mm)
             elif y_mm >= -200 and x_mm < 700: # 右手前方限制45
-                robot_control.pos_single_move("right", 0.0, (180-45), 0.0, x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("right", 0.0, (180-45), 0.0, x_mm, y_mm, z_mm)
             elif y_mm < -200 and y_mm > -400 : # 右手極限位置22.5
                 slope = ((-400) - (-200)) / (640 - 720) # y = mx + b
                 line_y = slope * (x_mm - 720) - 200
                 if y_mm <= line_y:
-                    robot_control.pos_single_move("right", 0.0, (180-67.5), 0.0, x_mm, y_mm, z_mm)
+                    self.robot_control.pos_single_move("right", 0.0, (180-67.5), 0.0, x_mm, y_mm, z_mm)
             else:
                 rospy.logwarn(f"[{self.action_type}] 目標位置超出右手可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
                 time.sleep(2.0) 
@@ -244,16 +364,16 @@ class BaseAction(ABC):
     def arm_pos_move_vertical(self, arm, x_mm, y_mm, z_mm):
         if arm == "right":
             if x_mm > 200 and x_mm < 550 and y_mm > -300 and y_mm < -20 and z_mm > -350 and z_mm < -150: # 右手垂直區域限制
-                robot_control.pos_single_move("right", 95.0, 0.0, -90.0, x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("right", 95.0, 0.0, -90.0, x_mm, y_mm, z_mm)
         elif arm == "left":
             if x_mm > 200 and x_mm < 550 and y_mm < 300 and y_mm > 20 and z_mm > -350 and z_mm < -150: # 左手垂直區域限制
-                robot_control.pos_single_move("left", -95.0, 0.0, -90.0,  x_mm, y_mm, z_mm)
+                self.robot_control.pos_single_move("left", -95.0, 0.0, -90.0, x_mm, y_mm, z_mm)
         else:
             rospy.logwarn(f"[{self.action_type}] 目標位置超出可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
             time.sleep(2.0)
 
     def dual_arm_move(self,left_oy, left_xyz_mm,right_oy, right_xyz_mm):
-        robot_control.pos_dual_move(
+        self.robot_control.pos_dual_move(
             -180.0, left_oy, 0.0,  left_xyz_mm[0], left_xyz_mm[1], left_xyz_mm[2],
              0.0, (180-right_oy), 0.0,  right_xyz_mm[0], right_xyz_mm[1], right_xyz_mm[2]
         )

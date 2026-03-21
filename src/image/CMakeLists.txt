@@ -36,6 +36,7 @@ catkin_package(
 ## 安裝 ROS 節點腳本（讓 rosrun 找得到）
 catkin_install_python(PROGRAMS
   scripts/head_xyz_detection.py
+  scripts/right_arm_xyz_detection.py
   scripts/head_xyz_test_client.py
   scripts/head_xyz_service_server.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

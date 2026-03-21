@@ -65,6 +65,9 @@ Output a JSON object with a "subtasks" list. Each subtask must have:
 - `step_id`: (Integer) 1, 2, 3...
 - `action_type`: (String) Action name. NEVER use MOVE_TO.
 - `target_object`: (String or null).
+  - If this is a real object name, it MUST be lowercase (e.g., "cola", "cup", "milk").
+  - For POUR, use lowercase format like "milk -> cup".
+  - Do NOT output capitalized names like "Cola" or "Milk".
 - `location_id`: (Integer 1-12) The location where this action is performed. REQUIRED for every action.
 - `hand_used`: (String or null). "Left_Arm", "Right_Arm", or null.
 - `estimated_duration`: (Integer) Seconds for the action itself (do NOT include travel time).
@@ -81,27 +84,27 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
     {
       "step_id": 1,
       "action_type": "PICK",
-      "target_object": "Milk",
+      "target_object": "milk",
       "location_id": 6,
       "hand_used": "Right_Arm",
       "estimated_duration": 5,
       "dependencies": [],
-      "description": "Pick up the Milk at Kitchen Fridge (location 6)."
+      "description": "Pick up the milk at Kitchen Fridge (location 6)."
     },
     {
       "step_id": 2,
       "action_type": "PICK",
-      "target_object": "Cup",
+      "target_object": "cup",
       "location_id": 5,
       "hand_used": "Left_Arm",
       "estimated_duration": 5,
       "dependencies": [],
-      "description": "Pick up the Cup at Living Room Cabinet (location 5)."
+      "description": "Pick up the cup at Living Room Cabinet (location 5)."
     },
     {
       "step_id": 3,
       "action_type": "POUR",
-      "target_object": "Milk -> Cup",
+      "target_object": "milk -> cup",
       "location_id": 7,
       "hand_used": "Right_Arm",
       "estimated_duration": 8,
@@ -111,7 +114,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
     {
       "step_id": 4,
       "action_type": "PLACE",
-      "target_object": "Cup",
+      "target_object": "cup",
       "location_id": 1,
       "hand_used": "Left_Arm",
       "estimated_duration": 5,
@@ -121,7 +124,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
     {
       "step_id": 5,
       "action_type": "PLACE",
-      "target_object": "Milk",
+      "target_object": "milk",
       "location_id": 6,
       "hand_used": "Right_Arm",
       "estimated_duration": 5,
