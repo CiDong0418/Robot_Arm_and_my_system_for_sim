@@ -87,6 +87,20 @@ class BaseAction(ABC):
         """取得位置欄位，兼容 location_id/location。"""
         return self._resolve_first_value("location_id", "location")
 
+    def _resolve_pick_context(self, object_name):
+        """從 pick_shared_memory 取出指定物件的 PICK 記錄。"""
+        pick_shared_memory = getattr(self, "pick_shared_memory", None)
+        if not isinstance(pick_shared_memory, dict):
+            rospy.logerr(f"[{self.action_type}] 缺少 pick_shared_memory，無法讀取 PICK 記錄")
+            return None
+
+        object_key = str(object_name).strip().lower()
+        if object_key not in pick_shared_memory:
+            rospy.logerr(f"[{self.action_type}] 記憶體中找不到 {object_name} 的拿取紀錄")
+            return None
+
+        return pick_shared_memory[object_key]
+
     def _resolve_camera_id(self, default=0) -> int:
         """
         取得 camera_id 並轉成 int。
@@ -341,7 +355,9 @@ class BaseAction(ABC):
         if arm == "left":
             if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
                 self.robot_control.pos_single_move("left", -180, 0.0, 0.0, x_mm, y_mm, z_mm)
-            elif y_mm >= -250 and x_mm < 680: # 左手前方限制45
+            elif y_mm <= 250 and x_mm < 580: # 左手前方限制65
+                self.robot_control.pos_single_move("left", -180, 25.0, 0.0, x_mm, y_mm, z_mm)
+            elif y_mm <= 250 and x_mm < 680: # 左手前方限制45
                 self.robot_control.pos_single_move("left", -180, 45.0, 0.0, x_mm, y_mm, z_mm)
             # elif y_mm < -200 and y_mm > -400 : # 左手極限位置22.5
             #     slope = ((-400) - (-200)) / (640 - 720) # y = mx + b
@@ -354,6 +370,8 @@ class BaseAction(ABC):
         elif arm == "right":
             if x_mm > 200 and x_mm < 350 and y_mm > -150 and y_mm < 150: # 平台區域限制
                 self.robot_control.pos_single_move("right", 0.0, (180), 0.0, x_mm, y_mm, z_mm)
+            elif y_mm >= -250 and x_mm < 580: # 右手前方限制65
+                self.robot_control.pos_single_move("right", 0.0, (180-25), 0.0, x_mm, y_mm, z_mm)
             elif y_mm >= -200 and x_mm < 700: # 右手前方限制45
                 self.robot_control.pos_single_move("right", 0.0, (180-45), 0.0, x_mm, y_mm, z_mm)
             elif y_mm < -200 and y_mm > -400 : # 右手極限位置22.5
@@ -376,6 +394,12 @@ class BaseAction(ABC):
         else:
             rospy.logwarn(f"[{self.action_type}] 目標位置超出可達範圍，請調整座標: x={x_mm}, y={y_mm}, z={z_mm}")
             time.sleep(2.0)
+
+    def right_arm_all_degree_move(self, ox, oy, oz, x_mm, y_mm, z_mm):
+        self.robot_control.pos_single_move("right", ox, oy, oz, x_mm, y_mm, z_mm)
+
+    def left_arm_all_degree_move(self, ox, oy, oz, x_mm, y_mm, z_mm):
+        self.robot_control.pos_single_move("left", ox, oy, oz, x_mm, y_mm, z_mm)
 
     def dual_arm_move(self,left_oy, left_xyz_mm,right_oy, right_xyz_mm):
         self.robot_control.pos_dual_move(

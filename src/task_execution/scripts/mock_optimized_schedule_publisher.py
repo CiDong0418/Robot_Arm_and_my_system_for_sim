@@ -13,28 +13,55 @@ TEST_PAYLOAD = [
             {
                 "step_id": 1,
                 "action_type": "PICK",
-                "target_object": "cola",
+                "target_object": "cup",
+                "location_id": 1,
+                "hand_used": "Left_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Pick up the bottle of tea from Living Room Table 1 (location 1).",
+                "parent_id": 1,
+                "global_id": "1_1"
+            },
+            # {
+            #     "step_id": 2,
+            #     "action_type": "PLACE",
+            #     "target_object": "cola",
+            #     "location_id": 2,
+            #     "hand_used": "Right_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [
+            #         "1_1"
+            #     ],
+            #     "description": "Place the cola on Living Room Table 2 (location 2).",
+            #     "parent_id": 1,
+            #     "global_id": "1_2"
+            # },
+            {
+                "step_id": 2,
+                "action_type": "PICK",
+                "target_object": "water",
                 "location_id": 1,
                 "hand_used": "Right_Arm",
                 "estimated_duration": 5,
                 "dependencies": [],
                 "description": "Pick up the cola from Living Room Table 1 (location 1).",
                 "parent_id": 1,
-                "global_id": "1_1"
+                "global_id": "1_2"
             },
             {
-                "step_id": 2,
-                "action_type": "PLACE",
-                "target_object": "cola",
-                "location_id": 2,
+                "step_id": 3,
+                "action_type": "POUR",
+                "target_object": "water -> cup",
+                "location_id": 1,
                 "hand_used": "Right_Arm",
-                "estimated_duration": 5,
+                "estimated_duration": 8,
                 "dependencies": [
-                    "1_1"
+                  "1_1",
+                  "1_2"
                 ],
-                "description": "Place the cola on Living Room Table 2 (location 2).",
+                "description": "Pour water into the cup at Kitchen Table 1 (location 1). Requires holding both water and cup first.",
                 "parent_id": 1,
-                "global_id": "1_2"
+                "global_id": "1_3"
             }
         ]
     }

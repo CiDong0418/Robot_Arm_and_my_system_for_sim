@@ -73,7 +73,7 @@ class PourAction(BaseAction):
             right_hand_initial_z = -130.0
             put_hand = "right"
 
-            if obj == "cup":
+            if catch_obj == "cup":
                 move_out = 70.0
                 self.arm_pos_move_horizontal(put_hand, table_x, table_y, target_z + 80)
                 self.arm_pos_move_horizontal(put_hand, table_x, table_y, target_z)
@@ -96,7 +96,7 @@ class PourAction(BaseAction):
             left_hand_initial_y = 130.0
             left_hand_initial_z = -130.0
             put_hand = "left"
-            if obj == "cup":
+            if catch_obj == "cup":
                 move_out = 70.0
                 self.arm_pos_move_horizontal(put_hand, table_x, table_y, target_z + 80)
                 self.arm_pos_move_horizontal(put_hand, table_x, table_y, target_z)
@@ -112,36 +112,34 @@ class PourAction(BaseAction):
                 
                 self.arm_have_object[put_hand] = None
         if pour_obj == self.arm_have_object["right"] :
-            # 再傾倒 
-            #從這裡開始改
-            if hand == "right":
-                self.arm_pos_move_horizontal("right", None, None, None, tilt_deg=45)  # 傾斜 45 度
-                rospy.sleep(2)  # 保持傾斜狀態 2 秒
-                self.right_arm_initial_position()  # 回到初始位置
-            elif hand == "left":
-                self.arm_pos_move_horizontal("left", None, None, None, tilt_deg=45)  # 傾斜 45 度
-                rospy.sleep(2)  # 保持傾斜狀態 2 秒
-                self.left_arm_initial_position()  # 回到初始位置
-            else:
-                rospy.logwarn(f"[{self.action_type}] 未定義的手部名稱: {hand}")
-                return False
+            #  傾倒 
+            table_x = 500.0
+            table_y = 0.0
+            target_z = target_drop_z
+            move_xy = 100.0
+            move_z = -80.0
+            put_hand = "right"
+            self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y - move_xy, move_z)
+            self.right_arm_all_degree_move(0.0, (180.0-45.0), -80, table_x + move_xy/2, table_y - move_xy , move_z ) # 傾斜 45 度
+            self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y - move_xy , move_z)
+            self.right_arm_initial_position()  # 回到初始位置
+        elif pour_obj == self.arm_have_object["left"] :
+            table_x = 500.0
+            table_y = 0.0
+            target_z = target_drop_z
+            move_xy = 100.0
+            move_z = -80.0
+            put_hand = "left"
+            self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y + move_xy, move_z)
+            self.left_arm_all_degree_move(0.0, (180.0-45.0), 80, table_x + move_xy/2, table_y + move_xy , move_z ) # 傾斜 45 度
+            self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y + move_xy , move_z)
+            self.left_arm_initial_position()  # 回到初始位置
+            
 
 
 
-        # 這裡先簡單示範一個固定的傾倒動作流程，實際上可以根據物件類型、位置等資訊調整動作細節
-        if obj in ["cola", "juice", "water", "tea"]:
-            # 假設傾倒動作是將手臂向前傾斜一定角度並保持一段時間
-            if hand == "right":
-                self.arm_pos_move_horizontal("right", None, None, None, tilt_deg=45)  # 傾斜 45 度
-                rospy.sleep(2)  # 保持傾斜狀態 2 秒
-                self.right_arm_initial_position()  # 回到初始位置
-            elif hand == "left":
-                self.arm_pos_move_horizontal("left", None, None, None, tilt_deg=45)  # 傾斜 45 度
-                rospy.sleep(2)  # 保持傾斜狀態 2 秒
-                self.left_arm_initial_position()  # 回到初始位置
-            else:
-                rospy.logwarn(f"[{self.action_type}] 未定義的手部名稱: {hand}")
-                return False
+       
+        
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義物件 {obj} 的 POUR 動作，先略過動作控制")
             return False    

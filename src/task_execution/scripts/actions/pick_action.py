@@ -42,7 +42,7 @@ class PickAction(BaseAction):
 
         pre_dis = 100.0
         # 5) 後續要串接的實體動作（你直接在這裡寫 flow）
-        if obj == "cup":
+        if obj == "green_cup":
             if hand == "right":
                 if world_y > -200:
                     move_deg = 100/math.sqrt(2) # 45度移動距離
@@ -72,7 +72,36 @@ class PickAction(BaseAction):
                 world_z = world_z - 40
 
             self.arm_have_object[hand] = obj
+        elif obj == "cup":
+            if hand == "right":
+                if world_y > -200:
+                    move_deg = 100/math.sqrt(2) # 45度移動距離
+                else :
+                    move_deg = 100*math.cos(math.radians(22.5))
+                # 先移動到距離物件約100mm的45度位置
+                self.arm_pos_move_horizontal("right",  (world_x - move_deg + result.radius/2 ), (world_y - move_deg), world_z - 40) # 移動到指定位置                                                                                                                                    
+                # 再移動到物件夾取點                    
+                self.arm_pos_move_horizontal("right",   world_x + result.radius/2  , world_y  , world_z - 40)
+                self.degree_gripper_control("right", 120) # 設定右手夾爪角度為120
+                self.right_arm_initial_position() # 右手回到初始位置
+                world_x = world_x - 0
+                world_y = world_y - 0
+                world_z = world_z - 40
+            elif hand == "left":
+                if world_y > 0:
+                    move_deg = 100/math.sqrt(2) # 45度移動距離
+                else :
+                    move_deg = 100*math.cos(math.radians(22.5))
+                self.arm_pos_move_horizontal("left", (world_x - move_deg + result.radius/2), (world_y + move_deg), world_z - 40) # 移動到指定位置                                                                                                                                    
+                self.arm_pos_move_horizontal("left", world_x + result.radius/2  , world_y  , world_z - 40)
+                self.degree_gripper_control("left", 120) # 設定左手夾爪角度為120
+                self.left_arm_initial_position() # 左手回到初始位置
+                
+                world_x = world_x - 0
+                world_y = world_y + 0
+                world_z = world_z - 40
 
+            self.arm_have_object[hand] = obj
             
         # 參考：
         # self.robot_control.single_arm_initial_position(hand)
