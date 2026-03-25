@@ -116,7 +116,7 @@ class PourAction(BaseAction):
             table_x = 500.0
             table_y = 0.0
             target_z = target_drop_z
-            move_xy = 100.0
+            move_xy = 130
             move_z = -80.0
             put_hand = "right"
             self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y - move_xy, move_z)
@@ -127,8 +127,8 @@ class PourAction(BaseAction):
             table_x = 500.0
             table_y = 0.0
             target_z = target_drop_z
-            move_xy = 100.0
-            move_z = -80.0
+            move_xy = 130
+            move_z = -60.0
             put_hand = "left"
             self.arm_pos_move_horizontal(put_hand, table_x + move_xy/2, table_y + move_xy, move_z)
             self.left_arm_all_degree_move(0.0, (180.0-45.0), 80, table_x + move_xy/2, table_y + move_xy , move_z ) # 傾斜 45 度
