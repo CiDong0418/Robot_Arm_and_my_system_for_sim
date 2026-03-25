@@ -39,19 +39,19 @@ TEST_PAYLOAD = [
             {
                 "step_id": 2,
                 "action_type": "PICK",
-                "target_object": "water",
+                "target_object": "a_carton_of_milk",
                 "location_id": 1,
                 "hand_used": "Right_Arm",
                 "estimated_duration": 5,
                 "dependencies": [],
-                "description": "Pick up the cola from Living Room Table 1 (location 1).",
+                "description": "Pick up the a_carton_of_milk from Living Room Table 1 (location 1).",
                 "parent_id": 1,
                 "global_id": "1_2"
             },
             {
                 "step_id": 3,
                 "action_type": "POUR",
-                "target_object": "water -> cup",
+                "target_object": "a_carton_of_milk -> cup",
                 "location_id": 1,
                 "hand_used": "Right_Arm",
                 "estimated_duration": 8,
@@ -59,7 +59,7 @@ TEST_PAYLOAD = [
                   "1_1",
                   "1_2"
                 ],
-                "description": "Pour water into the cup at Kitchen Table 1 (location 1). Requires holding both water and cup first.",
+                "description": "Pour a_carton_of_milk into the cup at Kitchen Table 1 (location 1). Requires holding both a_carton_of_milk and cup first.",
                 "parent_id": 1,
                 "global_id": "1_3"
             }

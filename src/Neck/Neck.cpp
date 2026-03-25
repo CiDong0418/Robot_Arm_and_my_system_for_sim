@@ -22,7 +22,7 @@ static const Eigen::Matrix<float,5,4> neck_table = (Eigen::Matrix<float,5,4>() <
 ).finished();
 
 Neck::Neck()
-    : MotorUnion({20,21}, {"Mx106", "Mx106"}),
+    : MotorUnion({20,21}, {"Mx106", "Mx106"}), // 20 21 smile
       DELAY_TIME_(1000)
 {
 	

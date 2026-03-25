@@ -136,6 +136,34 @@ class PickAction(BaseAction):
                 world_y = world_y + 35
                 world_z = world_z - 50
             self.arm_have_object[hand] = obj
+
+        elif obj == "a_carton_of_milk":
+            if hand == "right":
+                # if world_y > -200:
+                move_deg = 130/math.sqrt(2) # 45度移動距離
+                
+                self.arm_pos_move_horizontal("right",  (world_x - move_deg + result.radius ), (world_y - move_deg), world_z - 40) # 移動到指定位置                                                                                                                                    
+                self.arm_pos_move_horizontal("right",   world_x + result.radius -35 , world_y -40 , world_z - 70)
+                self.degree_gripper_control("right", 130) 
+                self.right_arm_initial_position() # 右手回到初始位置
+                print("test0418:")
+                print(f"world_x: {world_x}, world_y: {world_y}, world_z: {world_z}, move_deg: {move_deg}, result.radius: {result.radius}")
+                world_x = world_x - 35
+                world_y = world_y - 40
+                world_z = world_z - 80
+            elif hand == "left":
+                # if world_y > 0:
+                move_deg = 130/math.sqrt(2) # 45度移動距離
+                
+                self.arm_pos_move_horizontal("left", (world_x - move_deg + result.radius), (world_y + move_deg), world_z - 40) # 移動到指定位置                                                                                                                                    
+                self.arm_pos_move_horizontal("left", world_x + result.radius -35 , world_y +40 , world_z - 70)
+                self.degree_gripper_control("left", 130) # 設定左手夾爪角度為160
+                self.left_arm_initial_position() # 左手回到初始位置
+                world_x = world_x - 35
+                world_y = world_y + 40
+                world_z = world_z - 80
+            self.arm_have_object[hand] = obj
+
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義 {obj} 的 PICK 動作，僅記錄座標")
 
