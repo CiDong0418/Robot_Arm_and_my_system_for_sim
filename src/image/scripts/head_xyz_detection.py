@@ -79,9 +79,17 @@ def _load_config(yaml_path: str) -> dict:
     return cfg
 
 def _draw_bbox(frame: np.ndarray, x1: int, y1: int, x2: int, y2: int,
-               phrase: str, confidence: float, xyz_mm: tuple, radius_mm: float) -> None:
+               phrase: str, confidence: float, xyz_mm: tuple, radius_mm: float,
+               center_px: tuple = None) -> None:
     GREEN, ORANGE, font, fs = (0, 255, 0), (0, 200, 255), cv2.FONT_HERSHEY_SIMPLEX, 0.55
     cv2.rectangle(frame, (x1, y1), (x2, y2), GREEN, 2)
+
+    if center_px is not None:
+        cx, cy = int(center_px[0]), int(center_px[1])
+        RED = (0, 0, 255)
+        cv2.circle(frame, (cx, cy), 6, RED, 2)
+        cv2.drawMarker(frame, (cx, cy), RED, markerType=cv2.MARKER_CROSS, markerSize=16, thickness=2)
+        cv2.putText(frame, f"P({cx},{cy})", (cx + 8, cy - 8), font, 0.5, RED, 1, cv2.LINE_AA)
     
     label = f"{phrase} {confidence:.2f} | X:{xyz_mm[0]:.3f}mm Y:{xyz_mm[1]:.3f}mm Z:{xyz_mm[2]:.3f}mm"
     (tw, th), _ = cv2.getTextSize(label, font, fs, 1)
@@ -206,12 +214,14 @@ class HeadXYZDetectionNode:
         # 餵入純字典內參進行數學運算
         xyz = get_surface_xyz(self._intrinsics_dict, x1, y1, x2, y2, depth_median)
         R   = compute_object_radius_3d(self._intrinsics_dict, x1, y1, x2, y2, depth_median)
+        center_px = ((x1 + x2) // 2, (y1 + y2) // 2)
         xyz_mm = (xyz[0] * 1000, xyz[1] * 1000, xyz[2] * 1000)
         R_mm   = R * 1000
         with self._detection_lock:
             self._last_detection = {
                 "bbox": (x1, y1, x2, y2), "phrase": best["phrase"], 
                 "confidence": best["confidence"], "xyz_mm": xyz_mm, "R_mm": R_mm,
+                "center_px": center_px,
                 "expire_at": time.time() + BBOX_DISPLAY_SEC
             }
 
@@ -230,7 +240,7 @@ class HeadXYZDetectionNode:
             with self._detection_lock:
                 det = self._last_detection
                 if det and time.time() < det["expire_at"]:
-                    _draw_bbox(display, *det["bbox"], det["phrase"], det["confidence"], det["xyz_mm"], det["R_mm"])
+                    _draw_bbox(display, *det["bbox"], det["phrase"], det["confidence"], det["xyz_mm"], det["R_mm"], det.get("center_px"))
                 elif det and time.time() >= det["expire_at"]:
                     self._last_detection = None
 

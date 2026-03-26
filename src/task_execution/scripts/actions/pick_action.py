@@ -164,6 +164,30 @@ class PickAction(BaseAction):
                 world_z = world_z - 80
             self.arm_have_object[hand] = obj
 
+        elif obj == "scissors":
+            if hand == "right":
+                ratio = (result.radius - 41.0) / (97.255 - 41) # 剪刀的長寬
+                theta_rad = math.acos(math.sqrt(ratio))
+                oy = math.degrees(theta_rad)
+                oy_rad = math.radians(oy)
+                oz_rad = math.atan(math.sin(oy_rad) )
+                oz = math.degrees(oz_rad)
+                extension_mm = 27.0
+                back_x = -extension_mm * math.sin(oy_rad)
+                back_y = (-extension_mm / math.sqrt(2))* math.cos(oy_rad)
+                back_z = (extension_mm / math.sqrt(2))* math.cos(oy_rad)
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x  , world_y  , world_z + 50) # 移動到指定位置
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x + back_x , world_y + back_y , world_z + back_z -18) # 移動到指定位置
+                self.degree_gripper_control("right", 225) # 設定右手
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x  , world_y  , world_z + 50)
+                self.arm_pos_move_horizontal("right", world_x  , world_y  , world_z + 50)
+                self.right_arm_initial_position() # 右手回到初始位置
+                world_x = world_x + back_x
+                world_y = world_y + back_y
+                world_z = world_z - 18 + back_z
+            self.arm_have_object[hand] = obj
+
+
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義 {obj} 的 PICK 動作，僅記錄座標")
 
