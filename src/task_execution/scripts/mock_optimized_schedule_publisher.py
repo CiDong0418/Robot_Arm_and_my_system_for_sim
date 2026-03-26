@@ -10,17 +10,31 @@ TEST_PAYLOAD = [
         "parent_task_id": 1,
         "parent_task_name": "Move Cola to Living Room Table 2",
         "subtasks": [
+            # {
+            #     "step_id": 1,
+            #     "action_type": "PICK",
+            #     "target_object": "scissors",
+            #     "location_id": 1,
+            #     "hand_used": "Right_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [],
+            #     "description": "Pick up the scissors from Living Room Table 1 (location 1).",
+            #     "parent_id": 1,
+            #     "global_id": "1_1"
+            # },
             {
-                "step_id": 1,
-                "action_type": "PICK",
-                "target_object": "scissors",
-                "location_id": 1,
-                "hand_used": "Right_Arm",
-                "estimated_duration": 5,
-                "dependencies": [],
-                "description": "Pick up the bottle of tea from Living Room Table 1 (location 1).",
+                "step_id": 2,
+                "action_type": "OPEN_DRAWER",
+                "target_object": "scissors -> drawer",
+                "location_id": 5,
+                "hand_used": "Left_Arm",
+                "estimated_duration": 7,
+                "dependencies": [
+                "1_1"
+                ],
+                "description": "Open the Living Room Cabinet drawer and store the scissors inside (location 5).",
                 "parent_id": 1,
-                "global_id": "1_1"
+                "global_id": "1_2"
             }
             # {
             #     "step_id": 2,

@@ -85,6 +85,12 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 - For drawer operations, `target_object` must be `drawer`.
 - If the task involves `scissors` (pick/place/handover related), it can ONLY be handled by `Right_Arm`.
 
+**Drawer/Cabinet Placement Rule (CRITICAL):**
+- If the user intent is "put/store/place object into cabinet/drawer" (例如：放到櫃子裡、放進抽屜), you MUST use `OPEN_DRAWER` to represent that storage action.
+- In this case, `target_object` must use this exact format: `"<object> -> drawer"`.
+  - Example: `"target_object": "scissors -> drawer"`
+- Do NOT add an extra `PLACE` step for that same storage action. The storing behavior is considered included inside `OPEN_DRAWER`.
+
 **Dependency Logic (CRITICAL):**
 - `PLACE` always depends on `PICK` of the same object.
 - `POUR` depends on PICK of the source liquid AND PICK (or PLACE) of the target container. Both must be at the same location before pouring.
@@ -106,6 +112,10 @@ Output a JSON object with a "subtasks" list. Each subtask must have:
 - `estimated_duration`: (Integer) Seconds for the action itself (do NOT include travel time).
 - `dependencies`: (List of Integers) step_ids that must finish before this step. [] if none.
 - `description`: (String) Short explanation.
+
+**Extra Formatting Rule for `target_object` (CRITICAL):**
+- Normal actions: `target_object` must be one canonical object name.
+- Exception for drawer storage via `OPEN_DRAWER`: use `"<canonical_object> -> drawer"` (e.g., `"scissors -> drawer"`).
 
 **Example Input:**
 Task: "Get milk from Kitchen Fridge and pour it into a cup from Living Room Cabinet, then bring the cup to Living Room Table 1 and return the milk to Kitchen Fridge"
