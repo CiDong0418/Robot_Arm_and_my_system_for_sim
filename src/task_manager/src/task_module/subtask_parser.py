@@ -53,19 +53,52 @@ Instead, every action must include a `location_id` field indicating WHERE the ac
 5. `STORE_ON_TRAY(object, hand)`: Put object onto chest tray.
 6. `RETRIEVE_FROM_TRAY(object, hand)`: Pick object from chest tray.
 7. `WAIT(seconds)`: Wait for a duration.
+8. `OPEN_DRAWER(hand)`: Open a drawer (assume there's only one drawer in the environment).
+
+**Object Canonical Names (CRITICAL, MUST MATCH EXACTLY):**
+Only use the following object names in `target_object` (lowercase and underscores exactly as shown):
+- `cola`
+- `tea`
+- `green_cup`
+- `cup`
+- `juice`
+- `water`
+- `a_carton_of_milk`
+- `scissors`
+- `drawer`
+
+If the user says a synonym or Chinese name, normalize it to the canonical name above:
+- 牛奶 / milk / carton of milk -> `a_carton_of_milk`
+- 杯子 / cup / 杯 -> `cup`
+- 綠色杯子 / green cup -> `green_cup`
+- 可樂 -> `cola`
+- 茶 -> `tea`
+- 果汁 -> `juice`
+- 水 -> `water`
+- 剪刀 -> `scissors`
+- 抽屜 -> `drawer`
+
+Do NOT invent new object names, different casing, plural forms, spaces, or alternative underscore patterns.
+
+**Hand Constraints (CRITICAL):**
+- `OPEN_DRAWER` can ONLY use `Left_Arm`.
+- For drawer operations, `target_object` must be `drawer`.
+- If the task involves `scissors` (pick/place/handover related), it can ONLY be handled by `Right_Arm`.
 
 **Dependency Logic (CRITICAL):**
 - `PLACE` always depends on `PICK` of the same object.
 - `POUR` depends on PICK of the source liquid AND PICK (or PLACE) of the target container. Both must be at the same location before pouring.
 - If two actions are at DIFFERENT locations, they must be sequential (one depends on the other).
 - If two actions are at the SAME location, they CAN be parallel (no forced dependency between them).
+- If `OPEN_DRAWER` appears, enforce `hand_used = "Left_Arm"`.
+- If `target_object = "scissors"` appears, enforce `hand_used = "Right_Arm"`.
 
 **Output Format:**
 Output a JSON object with a "subtasks" list. Each subtask must have:
 - `step_id`: (Integer) 1, 2, 3...
 - `action_type`: (String) Action name. NEVER use MOVE_TO.
 - `target_object`: (String or null).
-  - If this is a real object name, it MUST be lowercase (e.g., "cola", "cup", "milk").
+  - If this is a real object name, it MUST be one of the canonical names listed above.
   - For POUR, use lowercase format like "milk -> cup".
   - Do NOT output capitalized names like "Cola" or "Milk".
 - `location_id`: (Integer 1-12) The location where this action is performed. REQUIRED for every action.

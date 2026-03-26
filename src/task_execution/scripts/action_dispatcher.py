@@ -6,12 +6,14 @@ from std_msgs.msg import String, Int32
 from actions.pick_action import PickAction
 from actions.place_action import PlaceAction
 from actions.pour import PourAction
+from actions.open_drawer import openDrawerAction
 
 # 建立動作字串與 Class 的映射表
 ACTION_REGISTRY = {
     "PICK": PickAction,
     "PLACE": PlaceAction,
     "POUR": PourAction,
+    "OPEN_DRAWER": openDrawerAction,
     # "HANDOVER": HandoverAction,
     # "STORE_ON_TRAY": StoreOnTrayAction,
     # "RETRIEVE_FROM_TRAY": RetrieveFromTrayAction,
