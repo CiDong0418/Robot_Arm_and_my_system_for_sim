@@ -5,7 +5,8 @@ import threading
 from types import SimpleNamespace
 
 import rospy
-from std_msgs.msg import String, Float32
+import rostopic
+from std_msgs.msg import String, Float32, Float32MultiArray, Int32
 from geometry_msgs.msg import PointStamped
 
 from .action_runtime import get_action_runtime
@@ -31,6 +32,8 @@ class BaseAction(ABC):
         "right": None,
     }
 
+    now_location_id = -1
+
     def __init__(self, task_data: dict):
         """初始化每個動作共用的任務資料與執行介面。"""
         self.task_data = task_data
@@ -42,6 +45,113 @@ class BaseAction(ABC):
             2: 709.0,
             3: 850.0
         }
+        # 0~12
+        self.location_xyoz_m = {
+            0: (0.0, 0.0, 0.0),
+            1: (0.0, 0.0, 0.0),
+            2: (0.0, 0.0, 0.0),
+            3: (0.0, 0.0, 0.0),
+            4: (0.0, 0.0, 0.0),
+            5: (0.0, 0.0, 0.0),
+            6: (0.0, 0.0, 0.0),
+            7: (0.0, 0.0, 0.0),
+            8: (0.0, 0.0, 0.0),
+            9: (0.0, 0.0, 0.0),
+            10: (0.0, 0.0, 0.0),
+            11: (0.0, 0.0, 0.0),
+            12: (0.0, 0.0, 0.0),
+        }
+
+
+
+        self._anna_move_pub = rospy.Publisher("/anna_move", Float32MultiArray, queue_size=10)
+        self._task_done_cv = threading.Condition()
+        self._task_done_seq = 0
+        self._task_done_last_value = None
+        self._task_done_sub = None
+        self._init_task_done_subscriber()
+
+    def _init_task_done_subscriber(self):
+        """根據 /task_done 真實型別建立 subscriber，避免型別不符收不到訊息。"""
+        task_done_topic = rospy.get_param("/task_execution/task_done_topic", "/task_done")
+        msg_class = None
+
+        try:
+            msg_class, _, _ = rostopic.get_topic_class(task_done_topic, blocking=False)
+        except Exception as error:
+            rospy.logwarn(f"[{self.action_type}] 偵測 {task_done_topic} 型別失敗，改用 Int32: {error}")
+
+        if msg_class is None:
+            msg_class = Int32
+
+        self._task_done_sub = rospy.Subscriber(task_done_topic, msg_class, self._task_done_cb, queue_size=10)
+
+    def _task_done_cb(self, msg):
+        try:
+            raw_value = getattr(msg, "data", msg)
+            if isinstance(raw_value, bool):
+                value = 1.0 if raw_value else 0.0
+            else:
+                value = float(raw_value)
+        except (TypeError, ValueError):
+            text_value = str(getattr(msg, "data", "")).strip()
+            value = 1.0 if text_value == "1" else 0.0
+
+        with self._task_done_cv:
+            self._task_done_seq += 1
+            self._task_done_last_value = value
+            self._task_done_cv.notify_all()
+
+    def move_base_and_wait(self, x, y, oz, timeout_sec=None, wait_subscriber_sec=1.5):
+        """
+        發送底盤導航目標到 /anna_move，並阻塞直到收到新的 /task_done == 1。
+
+        參數：
+        - x, y, oz: 要傳給 /anna_move 的三個數值。
+        - timeout_sec: 等待秒數；None 代表無限等待。
+        - wait_subscriber_sec: 發送前等待 /anna_move 有 subscriber 的最長秒數。
+
+        回傳：
+        - True: 收到新的 /task_done == 1。
+        - False: ROS 關閉或等待逾時。
+        """
+        target = Float32MultiArray(data=[float(x), float(y), float(oz)])
+
+        wait_deadline = time.time() + max(0.0, float(wait_subscriber_sec))
+        while (
+            self._anna_move_pub.get_num_connections() == 0
+            and time.time() < wait_deadline
+            and not rospy.is_shutdown()
+        ):
+            rospy.sleep(0.05)
+
+        with self._task_done_cv:
+            start_seq = self._task_done_seq
+
+        self._anna_move_pub.publish(target)
+        rospy.loginfo(
+            f"[{self.action_type}] 已發送 /anna_move: x={float(x):.3f}, y={float(y):.3f}, oz={float(oz):.3f}，等待 /task_done=1"
+        )
+
+        deadline = None if timeout_sec is None else (time.time() + max(0.0, float(timeout_sec)))
+        with self._task_done_cv:
+            while not rospy.is_shutdown():
+                if self._task_done_seq > start_seq and self._task_done_last_value is not None:
+                    if abs(float(self._task_done_last_value) - 1.0) < 1e-6:
+                        rospy.loginfo(f"[{self.action_type}] 收到 /task_done=1，導航完成")
+                        return True
+
+                if deadline is None:
+                    self._task_done_cv.wait(timeout=0.2)
+                    continue
+
+                remaining = deadline - time.time()
+                if remaining <= 0.0:
+                    break
+                self._task_done_cv.wait(timeout=min(0.2, remaining))
+
+        rospy.logwarn(f"[{self.action_type}] 等待 /task_done=1 失敗（逾時或 ROS 關閉）")
+        return False
 
     def _resolve_first_value(self, *keys, default=None):
         """

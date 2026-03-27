@@ -13,6 +13,14 @@ class PickAction(BaseAction):
         location = self._resolve_location_id()
         camera_id = self._resolve_camera_id(default=0)
 
+        # 確認location是否正確
+        if self.now_location_id != location:
+            rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id}，與 PICK 指定的 {location} 不符")
+            ok = self.move_base_and_wait(*self.location_xyoz_m.get(location, (0.0, 0.0, 0.0)))
+            if not ok:
+                rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+                return False
+                
         if not obj_raw:
             rospy.logerr(f"[{self.action_type}] 缺少物件名稱，請確認 task 內有 object/target_object")
             return False
