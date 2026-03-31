@@ -3,6 +3,7 @@ from typing import Sequence
 import time
 import threading
 from types import SimpleNamespace
+import math
 
 import rospy
 import rostopic
@@ -32,7 +33,11 @@ class BaseAction(ABC):
         "right": None,
     }
 
-    now_location_id = -1
+    now_location_id = {
+        "now": 0
+    }
+
+    
 
     def __init__(self, task_data: dict):
         """初始化每個動作共用的任務資料與執行介面。"""
@@ -41,21 +46,22 @@ class BaseAction(ABC):
         self.global_id = task_data.get("global_id", "N/A")
         self.robot_control, self.camera_transfer = get_action_runtime()
         self.table_heights = {
-            1: 709.0,
-            2: 709.0,
-            3: 850.0
+            1: 703.0,
+            2: 750.0,
+            3: 575.0,
+            4: 750.0
         }
         # 0~12
         self.location_xyoz_m = {
             0: (0.0, 0.0, 0.0),
-            1: (0.0, 0.0, 0.0),
-            2: (0.0, 0.0, 0.0),
-            3: (0.0, 0.0, 0.0),
-            4: (0.0, 0.0, 0.0),
+            1: (1.37, 0.22, -84.68),
+            2: (-1.28, 2.74, -177.86),
+            3: (-0.47, 3.4, 91.04),
+            4: (1.05, 3.63, 93.3),
             5: (0.0, 0.0, 0.0),
             6: (0.0, 0.0, 0.0),
             7: (0.0, 0.0, 0.0),
-            8: (0.0, 0.0, 0.0),
+            8: (1.24, 3.61, 85.5),
             9: (0.0, 0.0, 0.0),
             10: (0.0, 0.0, 0.0),
             11: (0.0, 0.0, 0.0),
@@ -115,7 +121,7 @@ class BaseAction(ABC):
         - True: 收到新的 /task_done == 1。
         - False: ROS 關閉或等待逾時。
         """
-        target = Float32MultiArray(data=[float(x), float(y), float(oz)])
+        target = Float32MultiArray(data=[float(x), float(y), (float(oz) * math.pi / 180.0)])
 
         wait_deadline = time.time() + max(0.0, float(wait_subscriber_sec))
         while (
@@ -516,6 +522,8 @@ class BaseAction(ABC):
             -180.0, left_oy, 0.0,  left_xyz_mm[0], left_xyz_mm[1], left_xyz_mm[2],
              0.0, (180-right_oy), 0.0,  right_xyz_mm[0], right_xyz_mm[1], right_xyz_mm[2]
         )
+    def neck_control(self, neck_ox, neck_oy):
+        self.robot_control.neck_control(neck_ox, neck_oy)
     @abstractmethod
     def execute(self) -> bool:
         """

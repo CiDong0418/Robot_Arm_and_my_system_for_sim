@@ -1,6 +1,7 @@
 import rospy
 
 from .base_action import BaseAction
+import time
 
 
 class PlaceAction(BaseAction):
@@ -53,6 +54,22 @@ class PlaceAction(BaseAction):
         if not hand:
             rospy.logerr(f"[{self.action_type}] 缺少 hand/hand_used，無法執行 PLACE")
             return False
+        # 確認location是否正確
+        if self.now_location_id["now"] != location:
+            rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
+            ok = self.move_base_and_wait(*self.location_xyoz_m.get(location, (0.0, 0.0, 0.0)))
+            if not ok:
+                rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+                return False
+            self.now_location_id["now"] = location
+            # self.neck_control(15, 35) # 移動到指定位置後調整頸部角度
+            # time.sleep(1.0) # 等待移動穩定
+            # self.neck_control(0, 35) # 調整頸部角度回正
+            # self.neck_control(-15, 35) # 調整頸部角度回正
+            # time.sleep(1.0) # 等待移動穩定
+            # self.neck_control(0, 35) # 調整頸部角度回正
+
+
         if not obj_raw:
             rospy.logerr(f"[{self.action_type}] 缺少 object/target_object，無法執行 PLACE")
             return False

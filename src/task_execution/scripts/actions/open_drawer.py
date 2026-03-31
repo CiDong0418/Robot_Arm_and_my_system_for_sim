@@ -17,14 +17,22 @@ class openDrawerAction(BaseAction):
         if hand != "left":
             rospy.logerr(f"[{self.action_type}] OPEN_DRAWER 只能使用 left 手，目前 hand={hand}")
             return False
+            
+        # 確認location是否正確
+        if self.now_location_id["now"] != location:
+            rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
+            ok = self.move_base_and_wait(*self.location_xyoz_m.get(location, (0.0, 0.0, 0.0)))
+            if not ok:
+                rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+                return False
 
         rospy.loginfo(f"[{self.action_type}] 開始執行 OPEN_DRAWER @ location={location}, hand={hand}")
-
+        self.right_arm_all_degree_move(0.0, 140.0, 0.0, 340.0, -130.0, -170.0)
         marker = self._request_aruco_marker_once(target="head", marker_id=1)
         if marker is None:
             rospy.logerr(f"[{self.action_type}] 取得 ArUco id=1 失敗，停止 OPEN_DRAWER")
             return False
-
+        self.right_arm_all_degree_move(0.0, 140.0, 0.0, 420.0, -130.0, -130.0)
         xyz_mm = marker["xyz_mm"]
         x_mm = float(xyz_mm["x"])
         y_mm = float(xyz_mm["y"])

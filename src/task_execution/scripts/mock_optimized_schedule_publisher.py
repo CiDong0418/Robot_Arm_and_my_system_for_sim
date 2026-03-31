@@ -13,20 +13,70 @@ TEST_PAYLOAD = [
             # {
             #     "step_id": 1,
             #     "action_type": "PICK",
-            #     "target_object": "scissors",
+            #     "target_object": "cola",
+            #     "location_id": 1,
+            #     "hand_used": "left_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [],
+            #     "description": "Pick up the cola from Living Room Table 1 (location 1).",
+            #     "parent_id": 1,
+            #     "global_id": "1_1"
+            # },
+            # {
+            #     "step_id": 2,
+            #     "action_type": "PICK",
+            #     "target_object": "water",
             #     "location_id": 1,
             #     "hand_used": "Right_Arm",
             #     "estimated_duration": 5,
             #     "dependencies": [],
             #     "description": "Pick up the scissors from Living Room Table 1 (location 1).",
             #     "parent_id": 1,
-            #     "global_id": "1_1"
+            #     "global_id": "1_2"
+            # },
+            # {
+            #     "step_id": 3,
+            #     "action_type": "PLACE",
+            #     "target_object": "water",
+            #     "location_id": 4,
+            #     "hand_used": "Right_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [
+            #     "1_2"
+            #     ],
+            #     "description": "Place the water on Living Room Table 4 (location 4).",
+            #     "parent_id": 1,
+            #     "global_id": "1_2"
+            # },
+            # {
+            #     "step_id": 4,
+            #     "action_type": "PICK",
+            #     "target_object": "scissors",
+            #     "location_id": 8,
+            #     "hand_used": "Right_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [],
+            #     "description": "Pick up the scissors from Living Room Table 1 (location 1).",
+            #     "parent_id": 1,
+            #     "global_id": "1_2"
+            # },
+            # {
+            #     "step_id": 5,
+            #     "action_type": "PLACE",
+            #     "target_object": "cola",
+            #     "location_id": 3,
+            #     "hand_used": "Left_Arm",
+            #     "estimated_duration": 5,
+            #     "dependencies": [],
+            #     "description": "Place the cola on Living Room Table 3 (location 3).",
+            #     "parent_id": 1,
+            #     "global_id": "1_2"
             # },
             {
-                "step_id": 2,
+                "step_id": 6,
                 "action_type": "OPEN_DRAWER",
                 "target_object": "scissors -> drawer",
-                "location_id": 5,
+                "location_id": 0,
                 "hand_used": "Left_Arm",
                 "estimated_duration": 7,
                 "dependencies": [
