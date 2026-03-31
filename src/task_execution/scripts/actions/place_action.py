@@ -46,6 +46,25 @@ class PlaceAction(BaseAction):
         height_diff = float(table_heights[drop_table_id]) - float(table_heights[pick_table_id])
         return pick_z + height_diff
 
+    def take_pick_shared_memory_xy(self, object_name):
+        pick_shared_memory = getattr(self, "pick_shared_memory", None)
+        if not isinstance(pick_shared_memory, dict):
+            rospy.logerr(f"[{self.action_type}] 缺少 pick_shared_memory，無法取得 PICK 資料")
+            return None
+
+        object_key = str(object_name).strip().lower()
+        if object_key not in pick_shared_memory:
+            rospy.logerr(f"[{self.action_type}] 記憶體中找不到 {object_name} 的拿取紀錄")
+            return None
+
+        pick_obj_data = pick_shared_memory[object_key]
+        pick_xyz = pick_obj_data.get("pick_xyz")
+        if not isinstance(pick_xyz, (list, tuple)) or len(pick_xyz) < 3:
+            rospy.logerr(f"[{self.action_type}] {object_name} 的 pick_xyz 格式錯誤: {pick_xyz}")
+            return None
+
+        return pick_xyz[0], pick_xyz[1]
+
     def execute(self) -> bool:
         hand = self._resolve_hand_name()
         location = self._resolve_location_id()
@@ -119,6 +138,27 @@ class PlaceAction(BaseAction):
                 mid_z = ((target_z + 50) - left_hand_initial_z) / 2 + left_hand_initial_z
                 self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
                 self.left_arm_initial_position()
+            self.arm_have_object[hand] = None
+        
+        elif obj == "small_cup":
+            put_z = target_drop_z 
+            
+            put_x, put_y = self.take_pick_shared_memory_xy(obj)
+            if put_x is None or put_y is None:
+                rospy.logerr(f"[{self.action_type}] 無法取得 {obj} 的 PICK 資料，無法執行 PLACE")
+                return False
+            self.left_arm_all_degree_move(-180.0, 40.0, 0.0, put_x, put_y, put_z + 40)
+            self.left_arm_all_degree_move(-180.0, 40.0, 0.0, put_x, put_y, put_z)
+            self.open_gripper("left")
+            self.left_arm_all_degree_move(-180.0, 40.0, 0.0, put_x - 30, put_y+30, put_z + 40)
+            self.left_arm_initial_position()
+            self.arm_have_object[hand] = None
+            # self.tray_memory.append(obj)
+
+        elif obj == "remote_control":
+            self.right_arm_all_degree_move(0.0, 180.0-45.0, 0.0, 550 , -140 , -240)
+            self.open_gripper("right")
+            self.right_arm_initial_position()
             self.arm_have_object[hand] = None
 
         elif obj in ["cola", "juice", "water", "tea"]:

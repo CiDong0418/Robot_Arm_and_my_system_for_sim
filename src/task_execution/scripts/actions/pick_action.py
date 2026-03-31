@@ -163,6 +163,18 @@ class PickAction(BaseAction):
                 world_y = world_y + 35
                 world_z = world_z - 50
             self.arm_have_object[hand] = obj
+        
+        elif obj == "small_cup":
+            if hand == "left":
+                self.left_arm_all_degree_move(-180.0, 40.0, 0.0, world_x -55, world_y +20, world_z - 30)
+                self.left_arm_all_degree_move(-180.0, 40.0, 0.0, world_x  -35 , world_y , world_z - 30)
+                self.degree_gripper_control("left", 165) # 設定左手夾爪角度為160
+                self.left_arm_initial_position() # 左手回到初始位置
+                world_x = world_x  -35
+                world_y = world_y 
+                world_z = world_z - 30
+                self.arm_have_object[hand] = obj
+
         elif obj == "cola": # 這裡先當作和 juice/water/tea 一樣處理，再調整參數讓它比較適合 cola 的大小
             if hand == "right":
                 if world_y > -200:

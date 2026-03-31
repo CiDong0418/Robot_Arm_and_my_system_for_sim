@@ -48,10 +48,12 @@ class BaseAction(ABC):
         self.global_id = task_data.get("global_id", "N/A")
         self.robot_control, self.camera_transfer = get_action_runtime()
         self.table_heights = {
+            0: 0.0,
             1: 703.0,
             2: 750.0,
             3: 575.0,
-            4: 750.0
+            4: 750.0,
+            5: 575.0
         }
         # 0~12
         self.location_xyoz_m = {
