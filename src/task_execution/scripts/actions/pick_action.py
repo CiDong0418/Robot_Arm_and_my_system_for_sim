@@ -17,12 +17,12 @@ class PickAction(BaseAction):
 
         # 確認location是否正確
         if self.now_location_id["now"] != location:
-            if location == 1:
+            # if location == 1:
                 
-                ok = self.move_base_and_wait(1.25 , 0.94 , -90.0)
-                if not ok:
-                    rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
-                    return False
+            #     ok = self.move_base_and_wait(1.25 , 0.94 , -90.0)
+            #     if not ok:
+            #         rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+            #         return False
             rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
             
             print(f"test0418: location={location}, now_location_id={self.now_location_id['now']}")
@@ -169,6 +169,7 @@ class PickAction(BaseAction):
                 self.left_arm_all_degree_move(-180.0, 40.0, 0.0, world_x -55, world_y +20, world_z - 30)
                 self.left_arm_all_degree_move(-180.0, 40.0, 0.0, world_x  -35 , world_y , world_z - 30)
                 self.degree_gripper_control("left", 165) # 設定左手夾爪角度為160
+                self.left_arm_all_degree_move(-180.0, 40.0, 0.0, world_x  -35 , world_y , world_z )
                 self.left_arm_initial_position() # 左手回到初始位置
                 world_x = world_x  -35
                 world_y = world_y 
