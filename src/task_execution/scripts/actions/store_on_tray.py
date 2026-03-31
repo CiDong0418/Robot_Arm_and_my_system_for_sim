@@ -54,6 +54,13 @@ class StoreOnTrayAction(BaseAction):
         if not hand:
             rospy.logerr(f"[{self.action_type}] 缺少 hand/hand_used，無法執行 PLACE")
             return False
+
+        if self.tray_memory is None:
+            self.tray_memory = []
+
+        if len(self.tray_memory) >= 1:
+            rospy.logerr(f"[{self.action_type}] 托盤已滿，無法再放置物品")
+            return False
         # 確認location是否正確
         if self.now_location_id["now"] != location:
             rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
@@ -120,6 +127,7 @@ class StoreOnTrayAction(BaseAction):
                 self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
                 self.left_arm_initial_position()
             self.arm_have_object[hand] = None
+            self.tray_memory.append(obj)
 
         elif obj in ["cola", "juice", "water", "tea"]:
             move_out = 50.0
@@ -142,6 +150,7 @@ class StoreOnTrayAction(BaseAction):
                 self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
                 self.left_arm_initial_position()
             self.arm_have_object[hand] = None
+            self.tray_memory.append(obj)
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義物件 {obj} 的 PLACE 動作，先略過動作控制")
             return False

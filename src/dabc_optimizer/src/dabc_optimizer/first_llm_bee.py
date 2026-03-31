@@ -31,23 +31,32 @@ You will receive a JSON dictionary containing all parsed atomic tasks.
 Each task is represented by a Key (Task ID) and a Value (Task Details).
 
 Task Details include:
-- `action_type`: The specific robot action (e.g., "PICK", "PLACE", "MOVE_TO", "STORE_ON_TRAY").
+- `action_type`: The specific robot action (e.g., "PICK", "PLACE", "OPEN_DRAWER", "STORE_ON_TRAY").
 - `dependencies`: List of Task IDs that MUST be executed BEFORE this task.
 - `hand_used`: "Left_Arm", "Right_Arm", or null.
 - `estimated_duration`: Execution time in seconds.
 
 Your objective is to generate a SINGLE, flat list of Task IDs representing the optimal execution sequence.
 
-**CRITICAL RULES:**
+**CRITICAL RULES (READ CAREFULLY):**
 1. **Strict Dependency:** A task MUST appear in the sequence AFTER all of its dependencies.
 2. **Completeness:** ALL Task IDs from the input dictionary MUST be included in the sequence exactly once.
-3. **Hand Capacity Limit (CRITICAL):** A single arm (Left_Arm or Right_Arm) can only hold one item at a time. The actions "PICK" and "RETRIEVE_FROM_TRAY" OCCUPY the hand. If an arm executes these actions, it CANNOT execute them again until it executes a "PLACE" or "STORE_ON_TRAY" action to free up the hand.
-4. **Cross-Task Interleaving:** You are highly encouraged to mix and interleave subtasks from different high-level goals (different Task ID prefixes). As long as you do not violate the dependency rules and hand capacity limits, concurrent execution using both arms is the best way to reduce overall time.
+3. **Hand Capacity Limit:** Each arm can only hold one item at a time. The actions "PICK" and "RETRIEVE_FROM_TRAY" OCCUPY the hand. If an arm is holding something, it cannot do another "PICK" or "RETRIEVE_FROM_TRAY" until a "PLACE" or "STORE_ON_TRAY" frees the hand.
+4. **Dynamic Hand Assignment:** Many tasks will have `hand_used = null`. You MUST still produce a valid order, but you should NOT add or remove tasks. A downstream scheduler will assign a valid hand and may insert helper actions (STORE_ON_TRAY, RETRIEVE_FROM_TRAY, HANDOVER) when needed.
+5. **Scissors Rule (Important):** Tasks involving `scissors` can ONLY be performed by Right_Arm. If Right_Arm is already holding something and a scissors task is next, the downstream scheduler will insert a HANDOVER from Right_Arm to Left_Arm first. Your job is to order tasks so this can happen without breaking dependencies.
+6. **Open Drawer Rule (Important):** `OPEN_DRAWER` can ONLY use Left_Arm and the left hand must be empty. If Left_Arm is holding something, the scheduler will insert STORE_ON_TRAY first. Avoid ordering that would make this impossible.
+7. **Tray Rule (Important):** When both hands are full and another PICK is required, the downstream scheduler will insert STORE_ON_TRAY to free a hand. Do NOT add this yourself; just avoid ordering that would force impossible dependency violations.
+8. **Cross-Task Interleaving:** You are encouraged to mix subtasks from different high-level goals (different Task ID prefixes) to minimize makespan, as long as you respect dependencies and hand capacity limits.
+
+**Examples:**
+Input task IDs: ["1_1"=PICK(cup), "1_2"=PICK(cola), "1_3"=PICK(scissors), "1_4"=PLACE(cup), "1_5"=PLACE(cola), "1_6"=OPEN_DRAWER(scissors->drawer)]
+Bad order (invalid): ["1_1", "1_2", "1_3", ...] because both hands are full and scissors must be Right_Arm; a HANDOVER will be needed before "1_3".
+Good order (valid): ["1_1", "1_2", "1_4", "1_3", "1_6", "1_5"] (frees a hand before the scissors step and respects dependencies).
 
 **Output Format:**
 You must output a strictly valid JSON object like this:
 {
-  "initial_sequence": ["4_1", "5_1", "4_2", "5_2", ...]
+    "initial_sequence": ["4_1", "5_1", "4_2", "5_2", ...]
 }
 """
 

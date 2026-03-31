@@ -33,6 +33,8 @@ class BaseAction(ABC):
         "right": None,
     }
 
+    tray_memory = []
+
     now_location_id = {
         "now": 0
     }

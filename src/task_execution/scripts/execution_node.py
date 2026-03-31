@@ -8,7 +8,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 class TaskExecutionNode:
     def __init__(self):
         rospy.init_node('task_execution_node')
-        
+
         # 任務佇列 (Queue)，使用 deque 實作以便左邊彈出
         self.task_queue = collections.deque()
         
@@ -47,7 +47,7 @@ class TaskExecutionNode:
             normalized.setdefault('hand_used', hand_name)
 
         return normalized
-        
+
     def schedule_callback(self, msg):
         try:
             tasks = json.loads(msg.data)

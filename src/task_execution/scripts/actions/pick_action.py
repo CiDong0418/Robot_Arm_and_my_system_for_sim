@@ -1,6 +1,7 @@
 import rospy
 import math
 import time
+from std_msgs.msg import String as RosString, Float32
 
 from .base_action import BaseAction
 
@@ -221,6 +222,9 @@ class PickAction(BaseAction):
             if hand == "right":
                 ratio = (result.radius - 41.0) / (97.255 - 41) # 剪刀的長寬
                 print(f"test0418: scissors ratio={ratio}")
+                if ratio < 0 or ratio > 1:
+                    rospy.logwarn(f"[{self.action_type}] scissors radius {result.radius} 超出預期範圍，無法正確計算夾取角度，請確認視覺結果是否合理")
+                    ratio = max(0, min(1, ratio)) # 強制限制在0到1之間
                 theta_rad = math.acos(math.sqrt(ratio))
                 print(f"test0418: scissors theta_rad={theta_rad}")
                 oy = math.degrees(theta_rad)
@@ -241,6 +245,41 @@ class PickAction(BaseAction):
                 world_y = world_y + back_y
                 world_z = world_z - 18 + back_z
             self.arm_have_object[hand] = obj
+
+        elif obj == "remote_control":
+            if hand == "right":
+                request_pub = rospy.Publisher("/llm_degree/request", RosString, queue_size=1)
+                rospy.sleep(0.05)  # 可選，等連線
+                request_pub.publish(RosString(data="go"))
+
+                try:
+                    angle_msg = rospy.wait_for_message("/llm_degree/angle", Float32, timeout=10.0)
+                    angle_value = float(angle_msg.data)
+                except Exception as error:
+                    rospy.logerr(f"[{self.action_type}] 取得遙控器角度失敗: {error}，改用預設 45 度")
+                    angle_value = 45.0
+
+                rospy.loginfo(f"[{self.action_type}] 遙控器角度={angle_value:.2f} 度")
+
+                oy = angle_value
+                oy_rad = math.radians(oy)
+                oz_rad = math.atan(math.sin(oy_rad) )
+                oz = math.degrees(oz_rad)
+                extension_mm = 27.0
+                back_x = -extension_mm * math.sin(oy_rad)
+                back_y = (-extension_mm / math.sqrt(2))* math.cos(oy_rad)
+                back_z = (extension_mm / math.sqrt(2))* math.cos(oy_rad)
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x  , world_y  , world_z + 50) # 移動到指定位置
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x + back_x , world_y + back_y , world_z + back_z -35) # 移動到指定位置
+                self.degree_gripper_control("right", 180) # 設定右手
+                self.right_arm_all_degree_move(135.0, oy, oz-180.0, world_x  , world_y  , world_z + 50)
+                self.arm_pos_move_horizontal("right", world_x  , world_y  , world_z + 100)
+                self.right_arm_initial_position() # 右手回到初始位置
+                world_x = world_x + back_x
+                world_y = world_y + back_y
+                world_z = world_z - 35 + back_z
+            self.arm_have_object[hand] = obj
+            
 
 
         else:

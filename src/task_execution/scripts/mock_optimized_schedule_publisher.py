@@ -22,18 +22,18 @@ TEST_PAYLOAD = [
             #     "parent_id": 1,
             #     "global_id": "1_1"
             # },
-            # {
-            #     "step_id": 2,
-            #     "action_type": "PICK",
-            #     "target_object": "water",
-            #     "location_id": 1,
-            #     "hand_used": "Right_Arm",
-            #     "estimated_duration": 5,
-            #     "dependencies": [],
-            #     "description": "Pick up the scissors from Living Room Table 1 (location 1).",
-            #     "parent_id": 1,
-            #     "global_id": "1_2"
-            # },
+            {
+                "step_id": 2,
+                "action_type": "PICK",
+                "target_object": "remote_control",
+                "location_id": 0,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Pick up the scissors from Living Room Table 1 (location 1).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            }
             # {
             #     "step_id": 3,
             #     "action_type": "PLACE",
@@ -72,20 +72,20 @@ TEST_PAYLOAD = [
             #     "parent_id": 1,
             #     "global_id": "1_2"
             # },
-            {
-                "step_id": 6,
-                "action_type": "OPEN_DRAWER",
-                "target_object": "scissors -> drawer",
-                "location_id": 0,
-                "hand_used": "Left_Arm",
-                "estimated_duration": 7,
-                "dependencies": [
-                "1_1"
-                ],
-                "description": "Open the Living Room Cabinet drawer and store the scissors inside (location 5).",
-                "parent_id": 1,
-                "global_id": "1_2"
-            }
+            # {
+            #     "step_id": 6,
+            #     "action_type": "OPEN_DRAWER",
+            #     "target_object": "scissors -> drawer",
+            #     "location_id": 0,
+            #     "hand_used": "Left_Arm",
+            #     "estimated_duration": 7,
+            #     "dependencies": [
+            #     "1_1"
+            #     ],
+            #     "description": "Open the Living Room Cabinet drawer and store the scissors inside (location 5).",
+            #     "parent_id": 1,
+            #     "global_id": "1_2"
+            # }
             # {
             #     "step_id": 2,
             #     "action_type": "PLACE",

@@ -5,6 +5,7 @@ import os
 import json
 from std_msgs.msg import String
 from std_srvs.srv import Trigger, TriggerResponse
+from datetime import datetime
 
 
 # 123
@@ -14,7 +15,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src'
 
 # Import 我們剛寫好的 src 模組
 from dabc_optimizer.dabc import DABC
-from dabc_optimizer.first_llm_bee import get_llm_initial_schedule  
+from dabc_optimizer.first_llm_bee import get_llm_initial_schedule
+from dabc_optimizer.fitness import TaskScheduler
 
 
 class SchedulerNode:
@@ -33,8 +35,35 @@ class SchedulerNode:
         
         # 4. 觸發服務 (Service) - 當你想排程時，呼叫這個
         rospy.Service('start_scheduling', Trigger, self.trigger_callback)
+
+        self._log_all = []
+        self._log_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../../task_manager/scheduler_log.json')
+        )
+        self._init_log()
         
         rospy.loginfo("[Scheduler] Ready. Collecting tasks... Call 'start_scheduling' to optimize.")
+        rospy.loginfo(f"📝 排程 log 將儲存至: {self._log_path}")
+
+    def _init_log(self):
+        """每次節點啟動時清空排程 log 檔"""
+        try:
+            with open(self._log_path, 'w', encoding='utf-8') as f:
+                json.dump([], f, ensure_ascii=False, indent=2)
+        except Exception as error:
+            rospy.logwarn(f"[Scheduler] 排程 log 初始化失敗: {error}")
+
+    def _save_to_log(self, tasks):
+        """把本次排程結果追加寫入 log 檔"""
+        self._log_all.append({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "schedule": tasks,
+        })
+        try:
+            with open(self._log_path, 'w', encoding='utf-8') as f:
+                json.dump(self._log_all, f, ensure_ascii=False, indent=2)
+        except Exception as error:
+            rospy.logwarn(f"[Scheduler] 排程 log 寫入失敗: {error}")
 
     @staticmethod
     def normalize_task_fields(task):
@@ -92,7 +121,10 @@ class SchedulerNode:
                     'dependencies': global_deps,
                     'action_type': task.get('action_type', 'PICK'),
                     'location_id': task.get('location_id', 1),  # 執行此動作的地點ID (1-12)，預設為 1
-                    'target_object': task.get('target_object', task.get('object'))
+                    'target_object': task.get('target_object', task.get('object')),
+                    'global_id': t_id,
+                    'parent_id': parent_id,
+                    'description': task.get('description', '')
                 }
                 
             rospy.loginfo(f"[Scheduler] Received batch. Total tasks in buffer: {len(self.task_buffer)}")
@@ -128,7 +160,10 @@ class SchedulerNode:
                             'dependencies': task.get('dependencies', []),
                             'action_type': task.get('action_type', 'PICK'),
                             'location_id': task.get('location_id', 1),
-                            'target_object': task.get('target_object', task.get('object'))
+                            'target_object': task.get('target_object', task.get('object')),
+                            'global_id': t_id,
+                            'parent_id': task.get('parent_id'),
+                            'description': task.get('description', '')
                         }
         except Exception as e:
             # 如果 node 還沒啟動或是找不到 service，就當作沒有舊任務
@@ -165,18 +200,19 @@ class SchedulerNode:
             rospy.logwarn(msg)
             return TriggerResponse(success=False, message=msg)
             
-        # 4. 根據最佳順序重新排列詳細資訊
-        optimized_tasks = []
-        for tid in best_seq:
-            # 這裡回頭去 buffer 找原始資料 (為了完整資訊)
-            # 實際專案建議優化這裡的查找效率
-            original_task = next((t for t in self.task_buffer if t['global_id'] == tid), None)
-            if original_task:
-                optimized_tasks.append(self.normalize_task_fields(original_task))
+        # 4. 根據最佳順序進行手臂配置與托盤插單
+        planner = TaskScheduler(self.task_lookup)
+        optimized_tasks, plan_makespan = planner.build_execution_plan(best_seq)
+
+        if plan_makespan == float('inf'):
+            msg = "Optimization Failed: No feasible plan after tray insertion."
+            rospy.logwarn(msg)
+            return TriggerResponse(success=False, message=msg)
 
         # 5. 發布結果
         json_output = json.dumps(optimized_tasks)
         self.result_pub.publish(json_output)
+        self._save_to_log(optimized_tasks)
         
         result_msg = f"Optimization Done! Makespan: {best_time}s. Sequence: {best_seq}"
         rospy.loginfo(result_msg)

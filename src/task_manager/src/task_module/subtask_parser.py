@@ -81,6 +81,7 @@ If the user says a synonym or Chinese name, normalize it to the canonical name a
 Do NOT invent new object names, different casing, plural forms, spaces, or alternative underscore patterns.
 
 **Hand Constraints (CRITICAL):**
+- Use `hand_used = null` by default for PICK/PLACE/POUR/STORE/RETRIEVE/HANDOVER. The scheduler will assign hands.
 - `OPEN_DRAWER` can ONLY use `Left_Arm`.
 - For drawer operations, `target_object` must be `drawer`.
 - If the task involves `scissors` (pick/place/handover related), it can ONLY be handled by `Right_Arm`.
@@ -98,6 +99,7 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 - If two actions are at the SAME location, they CAN be parallel (no forced dependency between them).
 - If `OPEN_DRAWER` appears, enforce `hand_used = "Left_Arm"`.
 - If `target_object = "scissors"` appears, enforce `hand_used = "Right_Arm"`.
+- Otherwise set `hand_used = null`.
 
 **Output Format:**
 Output a JSON object with a "subtasks" list. Each subtask must have:
@@ -108,7 +110,7 @@ Output a JSON object with a "subtasks" list. Each subtask must have:
   - For POUR, use lowercase format like "milk -> cup".
   - Do NOT output capitalized names like "Cola" or "Milk".
 - `location_id`: (Integer 1-12) The location where this action is performed. REQUIRED for every action.
-- `hand_used`: (String or null). "Left_Arm", "Right_Arm", or null.
+- `hand_used`: (String or null). Use null unless a rule forces a specific hand.
 - `estimated_duration`: (Integer) Seconds for the action itself (do NOT include travel time).
 - `dependencies`: (List of Integers) step_ids that must finish before this step. [] if none.
 - `description`: (String) Short explanation.
@@ -129,7 +131,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "action_type": "PICK",
       "target_object": "milk",
       "location_id": 6,
-      "hand_used": "Right_Arm",
+      "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [],
       "description": "Pick up the milk at Kitchen Fridge (location 6)."
@@ -139,7 +141,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "action_type": "PICK",
       "target_object": "cup",
       "location_id": 5,
-      "hand_used": "Left_Arm",
+      "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [],
       "description": "Pick up the cup at Living Room Cabinet (location 5)."
@@ -149,7 +151,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "action_type": "POUR",
       "target_object": "milk -> cup",
       "location_id": 7,
-      "hand_used": "Right_Arm",
+      "hand_used": null,
       "estimated_duration": 8,
       "dependencies": [1, 2],
       "description": "Pour milk into the cup at Kitchen Table 1 (location 7). Requires holding both milk and cup first."
@@ -159,7 +161,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "action_type": "PLACE",
       "target_object": "cup",
       "location_id": 1,
-      "hand_used": "Left_Arm",
+      "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [3],
       "description": "Bring the cup with milk to Living Room Table 1 (location 1)."
@@ -169,7 +171,7 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "action_type": "PLACE",
       "target_object": "milk",
       "location_id": 6,
-      "hand_used": "Right_Arm",
+      "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [3],
       "description": "Return the milk bottle to Kitchen Fridge (location 6)."
