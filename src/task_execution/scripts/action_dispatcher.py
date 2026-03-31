@@ -10,6 +10,7 @@ from actions.open_drawer import openDrawerAction
 from actions.store_on_tray import StoreOnTrayAction
 from actions.retrieve_from_tray import RetrieveFromTrayAction
 from actions.handover import HandoverAction
+from actions.water_dispenser import waterDispenserAction
 
 # 建立動作字串與 Class 的映射表
 ACTION_REGISTRY = {
@@ -22,6 +23,7 @@ ACTION_REGISTRY = {
     "RETRIEVE_FROM_TRAY": RetrieveFromTrayAction,
     "HANDOVER": HandoverAction,
     # "WAIT": WaitAction,
+    "WATER_DISPENSER": waterDispenserAction,
 }
 
 

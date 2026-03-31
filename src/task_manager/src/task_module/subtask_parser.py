@@ -54,6 +54,7 @@ Instead, every action must include a `location_id` field indicating WHERE the ac
 6. `RETRIEVE_FROM_TRAY(object, hand)`: Pick object from chest tray.
 7. `WAIT(seconds)`: Wait for a duration.
 8. `OPEN_DRAWER(hand)`: Open a drawer (assume there's only one drawer in the environment).
+9. `WATER_DISPENSER(hand)`: Interact with the water dispenser (assume there's only one water dispenser in the environment).
 
 **Object Canonical Names (CRITICAL, MUST MATCH EXACTLY):**
 Only use the following object names in `target_object` (lowercase and underscores exactly as shown):
@@ -83,6 +84,7 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 **Hand Constraints (CRITICAL):**
 - Use `hand_used = null` by default for PICK/PLACE/POUR/STORE/RETRIEVE/HANDOVER. The scheduler will assign hands.
 - `OPEN_DRAWER` can ONLY use `Left_Arm`.
+- `WATER_DISPENSER` can ONLY use `Right_Arm`.
 - For drawer operations, `target_object` must be `drawer`.
 - If the task involves `scissors` (pick/place/handover related), it can ONLY be handled by `Right_Arm`.
 
@@ -98,6 +100,7 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 - If two actions are at DIFFERENT locations, they must be sequential (one depends on the other).
 - If two actions are at the SAME location, they CAN be parallel (no forced dependency between them).
 - If `OPEN_DRAWER` appears, enforce `hand_used = "Left_Arm"`.
+- If `WATER_DISPENSER` appears, enforce `hand_used = "Right_Arm"`.
 - If `target_object = "scissors"` appears, enforce `hand_used = "Right_Arm"`.
 - Otherwise set `hand_used = null`.
 

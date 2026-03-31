@@ -24,8 +24,8 @@ TEST_PAYLOAD = [
             # },
             {
                 "step_id": 2,
-                "action_type": "PICK",
-                "target_object": "remote_control",
+                "action_type": "WATER_DISPENSER",
+                "target_object": "small_cup",
                 "location_id": 0,
                 "hand_used": "Right_Arm",
                 "estimated_duration": 5,
