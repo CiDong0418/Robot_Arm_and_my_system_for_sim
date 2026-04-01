@@ -38,6 +38,20 @@ class RetrieveFromTrayAction(BaseAction):
         rospy.loginfo(f"[{self.action_type}] 開始執行 RETRIEVE_FROM_TRAY: 使用 {hand} 手取回 {obj}")
 
         # 目前不做實體抓取流程，只更新內部狀態。
+        target_xyz = self.tray_xyz.get(hand)
+        if hand == "right":
+            self.arm_pos_move_horizontal(hand, target_xyz[0], target_xyz[1]-40, target_xyz[2] + 100)
+        elif hand == "left":
+            self.arm_pos_move_horizontal(hand, target_xyz[0], target_xyz[1]+40, target_xyz[2] + 100)
+        self.arm_pos_move_horizontal(hand, target_xyz[0], target_xyz[1], target_xyz[2] - 5)
+        self.close_gripper(hand)
+        self.arm_pos_move_horizontal(hand, target_xyz[0], target_xyz[1], target_xyz[2] + 60)
+        if hand == "right":
+            self.right_arm_initial_position()
+        elif hand == "left":
+            self.left_arm_initial_position()
+
+        self.tray_xyz[hand] = [0.0, 0.0, 0.0]  # 取回後托盤位置重置
         self.tray_memory.remove(obj)
         self.arm_have_object[hand] = obj
 

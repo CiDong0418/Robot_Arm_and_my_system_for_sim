@@ -25,6 +25,7 @@ class waterDispenserAction(BaseAction):
             if not ok:
                 rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
                 return False
+            self.now_location_id["now"] = location
 
         rospy.loginfo(f"[{self.action_type}] 開始執行 WATER_DISPENSER @ location={location}, hand={hand}")
         # self.right_arm_all_degree_move(0.0, 140.0, 0.0, 340.0, -130.0, -170.0)

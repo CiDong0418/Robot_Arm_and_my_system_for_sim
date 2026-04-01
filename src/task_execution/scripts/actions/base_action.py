@@ -35,6 +35,11 @@ class BaseAction(ABC):
 
     tray_memory = []
 
+    tray_xyz = {
+        "right": [0.0, 0.0, 0.0],
+        "left": [0.0, 0.0, 0.0],
+    }
+
     now_location_id = {
         "now": 0
     }
@@ -48,7 +53,7 @@ class BaseAction(ABC):
         self.global_id = task_data.get("global_id", "N/A")
         self.robot_control, self.camera_transfer = get_action_runtime()
         self.table_heights = {
-            0: 0.0,
+            0: 660.0,
             1: 703.0,
             2: 750.0,
             3: 575.0,

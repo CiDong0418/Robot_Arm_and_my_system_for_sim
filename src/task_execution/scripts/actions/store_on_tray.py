@@ -62,13 +62,13 @@ class StoreOnTrayAction(BaseAction):
             rospy.logerr(f"[{self.action_type}] 托盤已滿，無法再放置物品")
             return False
         # 確認location是否正確
-        if self.now_location_id["now"] != location:
-            rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
-            ok = self.move_base_and_wait(*self.location_xyoz_m.get(location, (0.0, 0.0, 0.0)))
-            if not ok:
-                rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
-                return False
-            self.now_location_id["now"] = location
+        # if self.now_location_id["now"] != location:
+        #     rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
+        #     ok = self.move_base_and_wait(*self.location_xyoz_m.get(location, (0.0, 0.0, 0.0)))
+        #     if not ok:
+        #         rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+        #         return False
+        #     self.now_location_id["now"] = location
             # self.neck_control(15, 35) # 移動到指定位置後調整頸部角度
             # time.sleep(1.0) # 等待移動穩定
             # self.neck_control(0, 35) # 調整頸部角度回正
@@ -84,20 +84,24 @@ class StoreOnTrayAction(BaseAction):
         if not obj:
             rospy.logerr(f"[{self.action_type}] 物件名稱為空字串，無法執行 PLACE")
             return False
-        if location is None:
-            rospy.logerr(f"[{self.action_type}] 缺少 location_id/location，無法執行 PLACE")
-            return False
+        # if location is None:
+        #     rospy.logerr(f"[{self.action_type}] 缺少 location_id/location，無法執行 PLACE")
+        #     return False
 
         rospy.loginfo(f"[{self.action_type}] 開始執行 PLACE: 使用 {hand} 手放置 {obj} 到 {location}")
 
-        target_drop_z = self._compute_target_drop_z(obj, location)
+        target_drop_z = self._compute_target_drop_z(obj,0)
         if target_drop_z is None:
             return False
 
         rospy.loginfo(f"[{self.action_type}] 計算完成，{obj} 目標放置 Z 高度: {target_drop_z:.2f}")
 
-        table_x = 600.0
-        table_y = 0.0
+        if hand == "right":
+            table_x = 250.0
+            table_y = -100.0
+        elif hand == "left":
+            table_x = 250.0
+            table_y = 100.0
         target_z = target_drop_z
         right_hand_initial_x = 420.0
         right_hand_initial_y = -130.0
@@ -106,51 +110,24 @@ class StoreOnTrayAction(BaseAction):
         left_hand_initial_y = 130.0
         left_hand_initial_z = -130.0
 
-        if obj == "cup":
-            move_out = 70.0
-            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z + 80)
-            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z)
-            self.open_gripper(hand)
-
-            if hand == "right":
-                self.arm_pos_move_horizontal(hand, table_x - move_out, table_y - move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - right_hand_initial_x) / 2 + right_hand_initial_x
-                mid_y = ((table_y - move_out) - right_hand_initial_y) / 2 + right_hand_initial_y
-                mid_z = ((target_z + 50) - right_hand_initial_z) / 2 + right_hand_initial_z
-                self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
-                self.right_arm_initial_position()
-            elif hand == "left":
-                self.arm_pos_move_horizontal(hand, table_x - move_out, table_y + move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - left_hand_initial_x) / 2 + left_hand_initial_x
-                mid_y = ((table_y + move_out) - left_hand_initial_y) / 2 + left_hand_initial_y
-                mid_z = ((target_z + 50) - left_hand_initial_z) / 2 + left_hand_initial_z
-                self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
-                self.left_arm_initial_position()
-            self.arm_have_object[hand] = None
-            self.tray_memory.append(obj)
-
-        elif obj in ["cola", "juice", "water", "tea"]:
+        if obj is not None:
             move_out = 50.0
-            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z + 80)
+            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z + 60)
             self.arm_pos_move_horizontal(hand, table_x, table_y, target_z)
             self.open_gripper(hand)
-
+            
             if hand == "right":
-                self.arm_pos_move_horizontal(hand, table_x - move_out, table_y - move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - right_hand_initial_x) / 2 + right_hand_initial_x
-                mid_y = ((table_y - move_out) - right_hand_initial_y) / 2 + right_hand_initial_y
-                mid_z = ((target_z + 50) - right_hand_initial_z) / 2 + right_hand_initial_z
-                self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
+                self.arm_pos_move_horizontal(hand, table_x, table_y-30, target_z + 100)
                 self.right_arm_initial_position()
+                
             elif hand == "left":
-                self.arm_pos_move_horizontal(hand, table_x - move_out, table_y + move_out, target_z + 50)
-                mid_x = ((table_x - move_out) - left_hand_initial_x) / 2 + left_hand_initial_x
-                mid_y = ((table_y + move_out) - left_hand_initial_y) / 2 + left_hand_initial_y
-                mid_z = ((target_z + 50) - left_hand_initial_z) / 2 + left_hand_initial_z
-                self.arm_pos_move_horizontal(hand, mid_x, mid_y, mid_z)
+                self.arm_pos_move_horizontal(hand, table_x, table_y+30, target_z + 100)
                 self.left_arm_initial_position()
             self.arm_have_object[hand] = None
             self.tray_memory.append(obj)
+            self.tray_xyz[hand] = [table_x, table_y, target_z]
+
+            
         else:
             rospy.logwarn(f"[{self.action_type}] 尚未定義物件 {obj} 的 PLACE 動作，先略過動作控制")
             return False

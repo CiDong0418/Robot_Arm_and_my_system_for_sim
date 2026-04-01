@@ -17,12 +17,12 @@ class PickAction(BaseAction):
 
         # 確認location是否正確
         if self.now_location_id["now"] != location:
-            # if location == 1:
+            if location == 3 and self.now_location_id["now"] == 1:
                 
-            #     ok = self.move_base_and_wait(1.25 , 0.94 , -90.0)
-            #     if not ok:
-            #         rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
-            #         return False
+                ok = self.move_base_and_wait(-1.98 , -1.11 , -18.0)
+                if not ok:
+                    rospy.logerr(f"[{self.action_type}] 移動到位置 {location} 失敗")
+                    return False
             rospy.logerr(f"[{self.action_type}] 目前位置 ID 為 {self.now_location_id['now']}，與 PICK 指定的 {location} 不符")
             
             print(f"test0418: location={location}, now_location_id={self.now_location_id['now']}")

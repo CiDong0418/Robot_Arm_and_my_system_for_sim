@@ -10,36 +10,114 @@ TEST_PAYLOAD = [
         "parent_task_id": 1,
         "parent_task_name": "Move Cola to Living Room Table 2",
         "subtasks": [
-            # {
-            #     "step_id": 1,
-            #     "action_type": "PICK",
-            #     "target_object": "cola",
-            #     "location_id": 1,
-            #     "hand_used": "left_Arm",
-            #     "estimated_duration": 5,
-            #     "dependencies": [],
-            #     "description": "Pick up the cola from Living Room Table 1 (location 1).",
-            #     "parent_id": 1,
-            #     "global_id": "1_1"
-            # },
-            # {
-            #     "step_id": 2,
-            #     "action_type": "PLACE",
-            #     "target_object": "cola",
-            #     "location_id": 2,
-            #     "hand_used": "left_Arm",
-            #     "estimated_duration": 5,
-            #     "dependencies": [],
-            #     "description": "Place the cola on Living Room Table 2 (location 2).",
-            #     "parent_id": 1,
-            #     "global_id": "1_2"
-            # },
             {
-                "step_id": 3,
+                "step_id": 1,
+                "action_type": "PICK",
+                "target_object": "water",
+                "location_id": 1,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Pick up the cola from Living Room Table 1 (location 1).",
+                "parent_id": 1,
+                "global_id": "1_1"
+            },
+            {
+                "step_id": 2,
                 "action_type": "PICK",
                 "target_object": "small_cup",
                 "location_id": 3,
                 "hand_used": "Left_Arm",
+                "estimated_duration": 5,
+                "dependencies": [
+                "1_2"
+                ],
+                "description": "Place the water on Living Room Table 4 (location 4).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 3,
+                "action_type": "STORE_ON_TRAY",
+                "target_object": "water",
+                "location_id": None,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Place the water on Living Room Table 2 (location 2).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 4,
+                "action_type": "WATER_DISPENSER",
+                "target_object": "small_cup",
+                "location_id": 4,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Pick up the scissors from Living Room Table 1 (location 1).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 5,
+                "action_type": "PLACE",
+                "target_object": "small_cup",
+                "location_id": 3,
+                "hand_used": "Left_Arm",
+                "estimated_duration": 7,
+                "dependencies": [
+                "1_1"
+                ],
+                "description": "Open the Living Room Cabinet drawer and store the scissors inside (location 5).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 6,
+                "action_type": "PICK",
+                "target_object": "remote_control",
+                "location_id": 5,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Place the cola on Living Room Table 3 (location 3).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 7,
+                "action_type": "PLACE",
+                "target_object": "remote_control",
+                "location_id": 3,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [
+                    "1_1"
+                ],
+                "description": "Place the remote_control on Living Room Table 3 (location 3).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 8,
+                "action_type": "RETRIEVE_FROM_TRAY",
+                "target_object": "water",
+                "location_id": None,
+                "hand_used": "Right_Arm",
+                "estimated_duration": 5,
+                "dependencies": [],
+                "description": "Retrieve the water from Living Room Table 2 (location 2).",
+                "parent_id": 1,
+                "global_id": "1_2"
+            },
+            {
+                "step_id": 9,
+                "action_type": "PLACE",
+                "target_object": "water",
+                "location_id": 2,
+                "hand_used": "Right_Arm",
                 "estimated_duration": 5,
                 "dependencies": [
                 "1_2"
