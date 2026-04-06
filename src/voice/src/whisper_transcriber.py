@@ -87,6 +87,8 @@ class WhisperTranscriber:
                 model    = self._model,
                 file     = audio_file,
                 language = self._language,
+                temperature = 0,
+                prompt = "這是機器人語音控制指令，請只輸出實際聽到的中文內容，不要補字幕、旁白或宣傳詞。",
             )
             text = response.text.strip()
             return text if text else None

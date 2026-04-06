@@ -37,6 +37,7 @@ if _SRC_DIR not in sys.path:
 from open_wake_word_detector import OpenWakeWordDetector
 from vad_recorder        import VADRecorder
 from whisper_transcriber import WhisperTranscriber
+from intent_router       import IntentRouter
 
 
 # ──────────────────────────── 設定讀取 ────────────────────────────────────
@@ -71,7 +72,9 @@ class VoiceNode:
 
         # ── Publishers ──
         self._pub_transcript = rospy.Publisher(
-            "/user_command", String, queue_size=5)
+            "/user_command", String, queue_size=10)
+        self._pub_reply = rospy.Publisher(
+            "/assistant_reply", String, queue_size=10)
         self._pub_status = rospy.Publisher(
             "/voice/status", String, queue_size=5)
 
@@ -83,6 +86,7 @@ class VoiceNode:
             vad_mode             = aud_cfg["vad_mode"],
             silence_duration_sec = aud_cfg["silence_duration_sec"],
             max_record_sec       = aud_cfg["max_record_sec"],
+            no_speech_timeout_sec = float(aud_cfg.get("no_speech_timeout_sec", 5.0)),
         )
 
         rospy.loginfo("[voice] 初始化 Whisper 轉錄器...")
@@ -90,6 +94,10 @@ class VoiceNode:
             model    = oai_cfg["model"],
             language = oai_cfg["language"],
         )  # api_key 自動從 src/.env 的 OPENAI_API_KEY 讀取
+
+        router_model = oai_cfg.get("intent_model", "gpt-4o-mini")
+        rospy.loginfo("[voice] 初始化語意路由器...")
+        self._intent_router = IntentRouter(model=router_model)
 
         # 防止喚醒詞重複觸發的鎖
         self._processing_lock = threading.Lock()
@@ -117,21 +125,17 @@ class VoiceNode:
             rospy.logwarn("[voice] 正在處理中，忽略此次喚醒。")
             return
 
-        # 在新的執行緒執行錄音+辨識（避免阻塞 Porcupine 的 audio callback）
-        t = threading.Thread(target=self._record_and_transcribe, daemon=True)
-        t.start()
+        # 在同一執行緒執行錄音+辨識，避免 OpenWakeWord 與 VAD 同時搶麥克風
+        self._record_and_transcribe()
 
     # ── 錄音 + 辨識流程 ──────────────────────────────────────────────────
 
     def _record_and_transcribe(self) -> None:
         """喚醒後執行：錄音 → Whisper → 發布結果。"""
         try:
+            self._wake_detector.set_enabled(False)
             rospy.loginfo("[voice] ✅ 偵測到「阿布」！開始錄音...")
             self._publish_status("woke")
-
-            # ── 短暫提示音 / 延遲（給使用者反應時間）──
-            import time
-            time.sleep(0.2)
 
             self._publish_status("recording")
             rospy.loginfo("[voice] 🎙️  錄音中，請說話...")
@@ -148,18 +152,31 @@ class VoiceNode:
 
             text = self._transcriber.transcribe(wav_bytes)
 
-            if text:
+            if text and not self._is_invalid_transcript(text):
                 rospy.loginfo(f"[voice] 📝  轉錄結果：「{text}」")
-                self._publish_transcript(text)
+                route = self._intent_router.route(text)
+                is_task = bool(route.get("is_task", False))
+                reply = str(route.get("reply", "")).strip()
+
+                if reply:
+                    self._publish_reply(reply)
+
+                if is_task:
+                    self._publish_transcript(text)
+                else:
+                    rospy.loginfo("[voice] 判定為一般聊天，不送入 /user_command。")
+
                 self._publish_status("idle")
             else:
-                rospy.logwarn("[voice] Whisper API 回傳空字串。")
+                rospy.logwarn("[voice] 本次無有效轉錄文字（空字串或誤轉錄樣板）。")
+                print("[voice][transcript] <NO_VALID_TEXT>", flush=True)
                 self._publish_status("idle")
 
         except Exception as e:
             rospy.logerr(f"[voice] 錯誤：{e}")
             self._publish_status(f"error: {e}")
         finally:
+            self._wake_detector.set_enabled(True)
             self._processing_lock.release()
 
     # ── 發布輔助方法 ──────────────────────────────────────────────────────
@@ -170,11 +187,39 @@ class VoiceNode:
         # 但為了確保中文發送正確不被轉譯為 ASCII escape，我們明確宣告字串
         msg.data = text
         self._pub_transcript.publish(msg)
+        print(f"[voice][transcript] {text}", flush=True)
 
     def _publish_status(self, status: str) -> None:
         msg = String()
         msg.data = status
         self._pub_status.publish(msg)
+
+    def _publish_reply(self, text: str) -> None:
+        msg = String()
+        msg.data = text
+        self._pub_reply.publish(msg)
+        print(f"[voice][reply] {text}", flush=True)
+
+    @staticmethod
+    def _is_invalid_transcript(text: str) -> bool:
+        """過濾常見 Whisper 靜音誤轉錄樣板。"""
+        normalized = (
+            text.strip()
+            .lower()
+            .replace(" ", "")
+            .replace("。", "")
+            .replace("，", "")
+            .replace(".", "")
+            .replace(",", "")
+        )
+
+        known_bad = {
+            "由amaraorg社群提供的字幕",
+            "字幕由amaraorg社群提供",
+            "字幕由amaraorg社区提供",
+            "由amaraorg社区提供字幕",
+        }
+        return normalized in known_bad
 
     # ── 清理 ──────────────────────────────────────────────────────────────
 

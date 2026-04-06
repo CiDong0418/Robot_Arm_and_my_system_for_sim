@@ -10,9 +10,12 @@ openwakeword 喚醒詞偵測模組。
 """
 import struct
 import threading
+import audioop
 from typing import Callable, Optional
 
 class OpenWakeWordDetector:
+    _FIXED_CAPTURE_RATE = 48000
+
     @staticmethod
     def _find_usb_mic():
         """搜尋名稱含 'USB' 的輸入設備，找到回傳 index，否則回傳 None（使用系統預設）。"""
@@ -59,6 +62,8 @@ class OpenWakeWordDetector:
         self._chunk_size  = chunk_size
 
         self._input_device_index = self._find_usb_mic()
+        self._capture_rate = self._sample_rate
+        self._resample_state = None
 
         import os
         # 強制 PyAudio 的 ALSA 介面允許 plug (自動重採樣) 轉換
@@ -79,7 +84,55 @@ class OpenWakeWordDetector:
             pass
 
         self._running  = False
+        self._enabled  = True
+        self._cooldown_seconds = 2.0
+        self._post_process_block_seconds = 2.5
+        self._armed = True
+        self._rearm_low_streak = 0
+        self._rearm_required_low_frames = 8
+        self._rearm_threshold_ratio = 0.4
+        self._debug_log_interval_sec = 1.0
         self._thread: Optional[threading.Thread] = None
+
+    def set_enabled(self, enabled: bool) -> None:
+        """啟用/停用喚醒詞偵測（停用時不做預測）。"""
+        self._enabled = bool(enabled)
+
+    def _open_input_stream(self):
+        """開啟輸入串流：固定使用 48kHz 擷取，再重採樣到 16kHz。"""
+        import rospy
+
+        candidates = []
+        if self._input_device_index is not None:
+            candidates.append(self._input_device_index)
+        candidates.append(None)
+
+        tried = set()
+        last_exc = None
+        for device_index in candidates:
+            key = device_index
+            if key in tried:
+                continue
+            tried.add(key)
+
+            try:
+                stream = self._pa.open(
+                    rate              = self._FIXED_CAPTURE_RATE,
+                    channels          = 1,
+                    format            = self._pa.get_format_from_width(2),
+                    input             = True,
+                    input_device_index = device_index,
+                    frames_per_buffer = max(1, int(self._FIXED_CAPTURE_RATE * (self._chunk_size / float(self._sample_rate)))),
+                )
+                self._capture_rate = self._FIXED_CAPTURE_RATE
+                self._resample_state = None
+                if self._capture_rate != self._sample_rate:
+                    rospy.loginfo(f"[OpenWakeWord] 固定採樣 {self._capture_rate}Hz，並即時重採樣到 {self._sample_rate}Hz。")
+                return stream
+            except Exception as e:
+                last_exc = e
+
+        raise last_exc if last_exc else RuntimeError("無法開啟錄音輸入串流")
 
     def start(self) -> None:
         """啟動背景監聽執行緒。"""
@@ -103,34 +156,45 @@ class OpenWakeWordDetector:
         import time
         import rospy
         
-        cooldown_seconds = 2.0
         last_trigger_time = 0.0
+        hit_streak = 0
 
         rospy.loginfo(f"[OpenWakeWord] 🎤 開始監聽麥克風 (Target={self._keyword}, Threshold={self._threshold})")
         
         frame_count = 0
+        last_debug_log_time = 0.0
         while self._running:
+            if not self._enabled:
+                time.sleep(0.02)
+                continue
+
             stream = None
             try:
                 # 確保 self._pa 存在
                 if self._pa is None:
                     self._pa = pyaudio.PyAudio()
-                    
-                stream = self._pa.open(
-                    rate             = self._sample_rate,
-                    channels         = 1,
-                    format           = self._pa.get_format_from_width(2),
-                    input            = True,
-                    frames_per_buffer = self._chunk_size,
-                )
+
+                stream = self._open_input_stream()
+                capture_chunk = max(1, int(self._capture_rate * (self._chunk_size / float(self._sample_rate))))
                 
                 while self._running:
                     # 讀取音訊資料 (16-bit PCM)，如果 overflow 發生我們直接忽略並繼續
-                    raw = stream.read(self._chunk_size, exception_on_overflow=False)
+                    raw = stream.read(capture_chunk, exception_on_overflow=False)
+
+                    if self._capture_rate != self._sample_rate:
+                        raw, self._resample_state = audioop.ratecv(
+                            raw,
+                            2,
+                            1,
+                            self._capture_rate,
+                            self._sample_rate,
+                            self._resample_state,
+                        )
+
                     pcm = np.frombuffer(raw, dtype=np.int16)
                     
-                    # 偵測靜音/過低的音量 (表示 dmix 取不到音訊)
-                    if np.abs(pcm).mean() < 10:
+                    # 偵測幾乎無輸入的音量（可能是裝置暫時無資料）
+                    if np.abs(pcm).mean() < 2:
                         # 假如有別人(VADRecorder)正在搶 Mic，音量可能變成接近 0
                         # 我們就當成沒收到聲音處理，不預測，降低 CPU 使用率
                         time.sleep(0.01)
@@ -142,14 +206,43 @@ class OpenWakeWordDetector:
                     # 取得該關鍵字的最新信心分數
                     score = prediction.get(self._keyword, 0.0)
                     current_time = time.time()
+
+                    if score >= self._threshold:
+                        hit_streak += 1
+                    else:
+                        hit_streak = 0
+
+                    # 觸發後需先「重新武裝」：觀察到一段連續低分才允許下一次觸發
+                    if not self._armed:
+                        if score < (self._threshold * self._rearm_threshold_ratio):
+                            self._rearm_low_streak += 1
+                        else:
+                            self._rearm_low_streak = 0
+
+                        if self._rearm_low_streak >= self._rearm_required_low_frames:
+                            self._armed = True
+                            self._rearm_low_streak = 0
+
+                        continue
                     
                     frame_count += 1
-                    if frame_count % 30 == 0: # 大約每秒印一次 (16000/1280 ≈ 12.5 frames/sec)
-                        rospy.logdebug(f"[OpenWakeWord] 目前分數: {score:.4f}")
+                    if current_time - last_debug_log_time >= self._debug_log_interval_sec:
+                        cooldown_left = max(0.0, (last_trigger_time + self._cooldown_seconds) - current_time)
+                        rospy.logdebug(
+                            f"[OpenWakeWord] 分數={score:.4f}, threshold={self._threshold:.2f}, "
+                            f"armed={self._armed}, enabled={self._enabled}, cooldown_left={cooldown_left:.2f}s"
+                        )
+                        last_debug_log_time = current_time
                         
-                    if score >= self._threshold and (current_time - last_trigger_time) > cooldown_seconds:
+                    if (
+                        score >= self._threshold
+                        and (current_time - last_trigger_time) > self._cooldown_seconds
+                    ):
                         rospy.loginfo(f"[OpenWakeWord] 🚀 [喚醒成功] 阿布聽到你了！ (瞬間峰值: {score:.3f})")
                         last_trigger_time = current_time
+                        hit_streak = 0
+                        self._armed = False
+                        self._rearm_low_streak = 0
                         
                         # ⚠️ 關鍵：在此處主動關閉目前的麥克風串流
                         # 讓後續的 VADRecorder 可以順利接管麥克風，避免 Device unavailable
@@ -157,20 +250,19 @@ class OpenWakeWordDetector:
                             stream.stop_stream()
                             stream.close()
                             stream = None
-                        
-                        # 完全終止 pyaudio 實例以釋放 ALSA 鎖
-                        if self._pa is not None:
-                            self._pa.terminate()
-                            self._pa = None
-                        
-                        # 讓作業系統有時間切換 ALSA 資源
-                        time.sleep(0.3)
-                            
-                        # 呼叫外層的回呼函數 (會阻塞直到 VAD 錄音+處理結束)
-                        self._on_wake()
-                        
-                        # VAD 結束後，重新建立 PyAudio 實例
-                        self._pa = pyaudio.PyAudio()
+
+                        # 縮短交接延遲：stream 關閉即可釋放輸入，僅保留極短等待
+                        time.sleep(0.05)
+
+                        # 喚醒後先暫停關鍵字偵測，待 VAD + Whisper 完成再恢復
+                        self.set_enabled(False)
+                        try:
+                            # 呼叫外層的回呼函數 (會阻塞直到 VAD 錄音+處理結束)
+                            self._on_wake()
+                        finally:
+                            # 任務完成後保留一段抑制時間，避免尾音/回授立即重觸發
+                            last_trigger_time = time.time() + self._post_process_block_seconds
+                            self.set_enabled(True)
                         
                         # 跳出內層迴圈，讓外層 while self._running 重新打開麥克風
                         break
