@@ -27,7 +27,7 @@ class IntentRouter:
 你會收到一段中文語句，請輸出 JSON：
 {
   "is_task": true/false,
-  "reply": "給使用者的一句口語回覆（繁體中文）"
+    "reply": "給使用者的口語回覆（繁體中文）"
 }
 
 判斷規則：
@@ -35,9 +35,9 @@ class IntentRouter:
 - is_task=false：一般聊天、問候、閒聊、知識問答，不需機器人動作
 
 reply 規則：
-- 繁體中文，1 句，簡短自然，可直接給 TTS 播放
-- 若 is_task=true：回覆「收到，會執行…」類型
-- 若 is_task=false：回覆一般聊天內容
+- 繁體中文，簡短自然，可直接給 TTS 播放
+- 若 is_task=true：回覆 「收到，會執行…」後面要街執行任務內容
+- 若 is_task=false：回覆 2 到 3 句一般聊天內容，語氣自然、簡潔
 
 只輸出合法 JSON，不要 markdown。
 """.strip()
@@ -85,5 +85,9 @@ reply 規則：
             # API 失敗時保守回退：任務語氣視為任務，其他當聊天
             task_keywords = ["幫我", "請", "拿", "放", "移", "倒", "送", "打開", "關", "清理", "操作"]
             is_task = any(k in text for k in task_keywords)
-            reply = "收到，我會幫你執行這個任務。" if is_task else "好的，我知道了。"
+            reply = (
+                "收到，我會幫你執行這個任務。"
+                if is_task
+                else "好的，我有聽到你說的。你可以再多告訴我一點，我會陪你聊聊。"
+            )
             return {"is_task": is_task, "reply": reply}

@@ -11,6 +11,7 @@ from actions.store_on_tray import StoreOnTrayAction
 from actions.retrieve_from_tray import RetrieveFromTrayAction
 from actions.handover import HandoverAction
 from actions.water_dispenser import waterDispenserAction
+from actions.scantableobjects import ScanTableObjects
 
 # 建立動作字串與 Class 的映射表
 ACTION_REGISTRY = {
@@ -24,6 +25,7 @@ ACTION_REGISTRY = {
     "HANDOVER": HandoverAction,
     # "WAIT": WaitAction,
     "WATER_DISPENSER": waterDispenserAction,
+    "SCAN_TABLE_OBJECTS": ScanTableObjects,
 }
 
 

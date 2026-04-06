@@ -156,11 +156,11 @@ class PickAction(BaseAction):
                 else :
                     move_deg = 100*math.cos(math.radians(22.5))
                 self.arm_pos_move_horizontal("left", (world_x - move_deg + result.radius), (world_y + move_deg), world_z - 40) # 移動到指定位置                                                                                                                                    
-                self.arm_pos_move_horizontal("left", world_x + result.radius -35 , world_y +35 , world_z - 50)
+                self.arm_pos_move_horizontal("left", world_x + result.radius -35 , world_y +35  , world_z - 50)
                 self.degree_gripper_control("left", 160) # 設定左手夾爪角度為160
                 self.left_arm_initial_position() # 左手回到初始位置
                 world_x = world_x - 35
-                world_y = world_y + 35
+                world_y = world_y +35
                 world_z = world_z - 50
             self.arm_have_object[hand] = obj
         
@@ -217,7 +217,7 @@ class PickAction(BaseAction):
                 print(f"world_x: {world_x}, world_y: {world_y}, world_z: {world_z}, move_deg: {move_deg}, result.radius: {result.radius}")
                 world_x = world_x - 35
                 world_y = world_y - 40
-                world_z = world_z - 80
+                world_z = world_z - 70
             elif hand == "left":
                 # if world_y > 0:
                 move_deg = 130/math.sqrt(2) # 45度移動距離
@@ -228,7 +228,7 @@ class PickAction(BaseAction):
                 self.left_arm_initial_position() # 左手回到初始位置
                 world_x = world_x - 35
                 world_y = world_y + 40
-                world_z = world_z - 80
+                world_z = world_z - 70
             self.arm_have_object[hand] = obj
 
         elif obj == "scissors":

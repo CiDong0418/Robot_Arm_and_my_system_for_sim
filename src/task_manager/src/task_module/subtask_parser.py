@@ -55,6 +55,7 @@ Instead, every action must include a `location_id` field indicating WHERE the ac
 7. `WAIT(seconds)`: Wait for a duration.
 8. `OPEN_DRAWER(hand)`: Open a drawer (assume there's only one drawer in the environment).
 9. `WATER_DISPENSER(hand)`: Interact with the water dispenser (assume there's only one water dispenser in the environment).
+10. `SCAN_TABLE_OBJECTS()`: Use sensors to detect and identify objects on the table at the current location.
 
 **Object Canonical Names (CRITICAL, MUST MATCH EXACTLY):**
 Only use the following object names in `target_object` (lowercase and underscores exactly as shown):
@@ -67,6 +68,7 @@ Only use the following object names in `target_object` (lowercase and underscore
 - `a_carton_of_milk`
 - `scissors`
 - `drawer`
+- `medicine jar`
 
 If the user says a synonym or Chinese name, normalize it to the canonical name above:
 - 牛奶 / milk / carton of milk -> `a_carton_of_milk`
@@ -78,7 +80,7 @@ If the user says a synonym or Chinese name, normalize it to the canonical name a
 - 水 -> `water`
 - 剪刀 -> `scissors`
 - 抽屜 -> `drawer`
-
+- 藥罐 -> `medicine jar`
 Do NOT invent new object names, different casing, plural forms, spaces, or alternative underscore patterns.
 
 **Hand Constraints (CRITICAL):**

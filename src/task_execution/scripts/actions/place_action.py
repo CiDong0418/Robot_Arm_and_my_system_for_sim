@@ -119,7 +119,8 @@ class PlaceAction(BaseAction):
         left_hand_initial_z = -130.0
 
         if obj == "cup":
-            move_out = 70.0
+            move_out = 50.0
+            
             self.arm_pos_move_horizontal(hand, table_x, table_y, target_z + 80)
             self.arm_pos_move_horizontal(hand, table_x, table_y, target_z)
             self.open_gripper(hand)
@@ -154,6 +155,18 @@ class PlaceAction(BaseAction):
             self.left_arm_initial_position()
             self.arm_have_object[hand] = None
             # self.tray_memory.append(obj)
+        
+        elif obj == "a_carton_of_milk":
+            put_z = target_drop_z 
+            
+            put_x, put_y = self.take_pick_shared_memory_xy(obj)
+            if hand == "right":
+                self.right_arm_all_degree_move(0.0, 180.0-45.0, 0.0, put_x , put_y , target_z + 80)
+                self.right_arm_all_degree_move(0.0, 180.0-45.0, 0.0, put_x , put_y , target_z)
+                self.open_gripper("right")
+                self.right_arm_all_degree_move(0.0, 180.0-45.0, 0.0, put_x - 50, put_y - 50 , target_z + 50)
+                self.right_arm_initial_position()
+                self.arm_have_object[hand] = None
 
         elif obj == "remote_control":
             self.right_arm_all_degree_move(0.0, 180.0-45.0, 0.0, 550 , -140 , -240)
@@ -163,8 +176,9 @@ class PlaceAction(BaseAction):
 
         elif obj in ["cola", "juice", "water", "tea"]:
             move_out = 50.0
+            
             self.arm_pos_move_horizontal(hand, table_x, table_y, target_z + 80)
-            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z)
+            self.arm_pos_move_horizontal(hand, table_x, table_y, target_z+10)
             self.open_gripper(hand)
 
             if hand == "right":
