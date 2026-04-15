@@ -6,6 +6,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from colorama import Fore, Style
 
+from task_module.domain_catalog import ACTION_CATALOG, OBJECT_CATALOG, OPERABLE_LOCATIONS
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(current_dir, '../../.env')
@@ -14,9 +16,39 @@ env_path = os.path.join(current_dir, '../../.env')
 load_dotenv(dotenv_path=env_path)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# === 小任務拆解專用的 System Prompt ===
-# 這裡定義機器人的原子動作 (Atomic Actions)
-SUBTASK_SYSTEM_PROMPT = """
+def _format_operable_locations_table():
+    header = ["| ID | 中文名稱 | English Name |", "|----|--------|--------------|"]
+    rows = [
+        f"| {loc['location_id']:>2} | {loc['zh_name']} | {loc['location_name']} |"
+        for loc in OPERABLE_LOCATIONS
+    ]
+    return "\n".join(header + rows)
+
+
+def _format_action_lines():
+    return "\n".join(
+        [
+            f"{action['id']}. `{action['signature']}`: {action['description']}"
+            for action in ACTION_CATALOG
+        ]
+    )
+
+
+def _format_object_lines():
+    return "\n".join(
+        [
+            f"- `{obj['zh_name']}` / `{obj['object_name']}` (default: {obj['location_name']} / location_id={obj['location_id']})"
+            for obj in OBJECT_CATALOG
+        ]
+    )
+
+
+def _build_subtask_system_prompt():
+    operable_location_ids = [loc["location_id"] for loc in OPERABLE_LOCATIONS]
+    min_location_id = min(operable_location_ids)
+    max_location_id = max(operable_location_ids)
+
+    return f"""
 You are a Low-Level Action Planner for a dual-arm mobile robot.
 Your goal is to decompose a High-Level Task into a sequence of **Atomic Actions** with strictly defined **Dependencies**.
 
@@ -29,109 +61,104 @@ Your goal is to decompose a High-Level Task into a sequence of **Atomic Actions*
 Movement is an implicit cost calculated automatically by the scheduler.
 Instead, every action must include a `location_id` field indicating WHERE the action takes place.
 
-**Available Location IDs:**
-| ID | Location Name          |
-|----|------------------------|
-|  1 | Living Room Table 1    |
-|  2 | Living Room Table 2    |
-|  3 | Living Room Sofa 1     |
-|  4 | Living Room Sofa 2     |
-|  5 | Living Room Cabinet    |
-|  6 | Kitchen Fridge         |
-|  7 | Kitchen Table 1        |
-|  8 | Kitchen Table 2        |
-|  9 | Room A Bed             |
-| 10 | Room A Desk            |
-| 11 | Room B Bed             |
-| 12 | Room B Desk            |
+**Reachable and Operable Locations (single source of truth):**
+{_format_operable_locations_table()}
 
-**Available Atomic Actions (NO MOVE_TO):**
-1. `PICK(object, hand)`: Grasp an object at a specific location.
-2. `PLACE(object, hand)`: Put an object down at a specific location.
-3. `POUR(source_object, target_object, hand)`: Pour liquid from source (e.g. milk bottle, juice bottle, water bottle) into target container (e.g. cup, bowl). Prerequisite: BOTH source AND target must already be picked up or placed at the same location. This action depends on PICK of source AND PICK/PLACE of target.
-4. `HANDOVER(from_hand, to_hand)`: Transfer object between hands (location = current position).
-5. `STORE_ON_TRAY(object, hand)`: Put object onto chest tray.
-6. `RETRIEVE_FROM_TRAY(object, hand)`: Pick object from chest tray.
-7. `WAIT(seconds)`: Wait for a duration.
-8. `OPEN_DRAWER(hand)`: Open a drawer (assume there's only one drawer in the environment).
-9. `WATER_DISPENSER(hand)`: Interact with the water dispenser (assume there's only one water dispenser in the environment).
-10. `SCAN_TABLE_OBJECTS()`: Use sensors to detect and identify objects on the table at the current location.
+**Available Atomic Actions (NO MOVE_TO, single source of truth):**
+{_format_action_lines()}
+
+**Object Catalog with Default Locations (single source of truth):**
+{_format_object_lines()}
 
 **Object Canonical Names (CRITICAL, MUST MATCH EXACTLY):**
-Only use the following object names in `target_object` (lowercase and underscores exactly as shown):
-- `cola`
-- `tea`
-- `green_cup`
-- `cup`
-- `juice`
-- `water`
-- `a_carton_of_milk`
-- `scissors`
-- `drawer`
-- `medicine jar`
+Only use the English object names from the object catalog above in `target_object`.
+Chinese input should be normalized to the corresponding English name.
+Use lowercase with exact underscores as defined (for example: `milk`, `medicine_jar`, `wet_wipe`).
 
-If the user says a synonym or Chinese name, normalize it to the canonical name above:
-- 牛奶 / milk / carton of milk -> `a_carton_of_milk`
-- 杯子 / cup / 杯 -> `cup`
-- 綠色杯子 / green cup -> `green_cup`
-- 可樂 -> `cola`
-- 茶 -> `tea`
-- 果汁 -> `juice`
-- 水 -> `water`
-- 剪刀 -> `scissors`
-- 抽屜 -> `drawer`
-- 藥罐 -> `medicine jar`
+If the user says a synonym or Chinese name, normalize it to canonical names:
+- milk / carton of milk / 牛奶 -> `milk`
+- juice / 果汁 -> `juice`
+- cola / 可樂 -> `cola`
+- water cup / 水杯 -> `water_cup`
+- drink cup / 飲料杯 -> `drink_cup`
+- mineral water / 礦泉水 -> `mineral_water`
+- apple / 蘋果 -> `apple`
+- banana / 香蕉 -> `banana`
+- orange / 橘子 -> `orange`
+- cookie / 餅乾 -> `cookie`
+- lemon / 檸檬 -> `lemon`
+- tissue box / 衛生紙 -> `tissue_box`
+- wet wipe / 濕紙巾 -> `wet_wipe`
+- remote control / 遙控器 -> `remote_control`
+- medicine_jar / 藥罐 -> `medicine_jar`
+- pen / 原子筆 -> `pen`
+- notebook / 筆記本 -> `notebook`
+- glasses case / 眼鏡盒 -> `glasses_case`
+- scissors / 剪刀 -> `scissors`
+- tape / 膠帶 -> `tape`
+- utility knife / 美工刀 -> `utility_knife`
+- scrub sponge / 菜瓜布 -> `scrub_sponge`
+- hand soap / 洗手乳 -> `hand_soap`
+- salt shaker / 鹽巴罐 -> `salt_shaker`
+- instant powder packet / 沖泡粉包 -> `instant_powder_packet`
+- keyring / 鑰匙串 -> `keyring`
+- comb / 梳子 -> `comb`
+- camera / 相機 -> `camera`
+- headphones / 耳機 -> `headphones`
+- bowl / 碗 -> `bowl`
+- cloth / 抹布 -> `cloth`
+If a name is not in the catalog, do not invent a new one.
 Do NOT invent new object names, different casing, plural forms, spaces, or alternative underscore patterns.
 
 **Hand Constraints (CRITICAL):**
-- Use `hand_used = null` by default for PICK/PLACE/POUR/STORE/RETRIEVE/HANDOVER. The scheduler will assign hands.
-- `OPEN_DRAWER` can ONLY use `Left_Arm`.
+- Use `hand_used = null` by default for PICK/PLACE/POUR/STORE/RETRIEVE/HANDOVER/PRESS_BUTTON/WIPE_SURFACE.
+- `OPEN_DRAWER` and `CLOSE_DRAWER` can ONLY use `Left_Arm`.
 - `WATER_DISPENSER` can ONLY use `Right_Arm`.
 - For drawer operations, `target_object` must be `drawer`.
 - If the task involves `scissors` (pick/place/handover related), it can ONLY be handled by `Right_Arm`.
 
-**Drawer/Cabinet Placement Rule (CRITICAL):**
-- If the user intent is "put/store/place object into cabinet/drawer" (例如：放到櫃子裡、放進抽屜), you MUST use `OPEN_DRAWER` to represent that storage action.
-- In this case, `target_object` must use this exact format: `"<object> -> drawer"`.
-  - Example: `"target_object": "scissors -> drawer"`
-- Do NOT add an extra `PLACE` step for that same storage action. The storing behavior is considered included inside `OPEN_DRAWER`.
+**Drawer/Cabinet Rules (CRITICAL):**
+- If user intent is "put/store/place object into cabinet/drawer", you MUST represent storage as opening that container.
+- Drawer storage format: `"<object> -> drawer"` with `OPEN_DRAWER`.
+- Cabinet storage/retrieval must include `OPEN_CABINET` before the item manipulation and `CLOSE_CABINET` when leaving.
+- Do NOT add an extra PLACE for the exact same drawer-storage action represented by `OPEN_DRAWER`.
 
 **Dependency Logic (CRITICAL):**
 - `PLACE` always depends on `PICK` of the same object.
-- `POUR` depends on PICK of the source liquid AND PICK (or PLACE) of the target container. Both must be at the same location before pouring.
-- If two actions are at DIFFERENT locations, they must be sequential (one depends on the other).
-- If two actions are at the SAME location, they CAN be parallel (no forced dependency between them).
-- If `OPEN_DRAWER` appears, enforce `hand_used = "Left_Arm"`.
+- `POUR` depends on PICK of the source liquid AND PICK (or PLACE) of the target container.
+- `WIPE_SURFACE` depends on PICK of `cloth` or `wet_wipe` in the same hand.
+- If two actions are at different locations, they must be sequential.
+- If two actions are at the same location, they can be parallel unless prerequisites force order.
+- If `OPEN_DRAWER` or `CLOSE_DRAWER` appears, enforce `hand_used = "Left_Arm"`.
 - If `WATER_DISPENSER` appears, enforce `hand_used = "Right_Arm"`.
 - If `target_object = "scissors"` appears, enforce `hand_used = "Right_Arm"`.
 - Otherwise set `hand_used = null`.
 
 **Output Format:**
-Output a JSON object with a "subtasks" list. Each subtask must have:
+Output a JSON object with a `subtasks` list. Each subtask must have:
 - `step_id`: (Integer) 1, 2, 3...
 - `action_type`: (String) Action name. NEVER use MOVE_TO.
 - `target_object`: (String or null).
-  - If this is a real object name, it MUST be one of the canonical names listed above.
-  - For POUR, use lowercase format like "milk -> cup".
-  - Do NOT output capitalized names like "Cola" or "Milk".
-- `location_id`: (Integer 1-12) The location where this action is performed. REQUIRED for every action.
+  - If this is a real object name, it MUST be one canonical object name from the object catalog.
+  - For POUR, use lowercase format like `milk -> cup`.
+- `location_id`: (Integer {min_location_id}-{max_location_id}) Required for every action.
 - `hand_used`: (String or null). Use null unless a rule forces a specific hand.
 - `estimated_duration`: (Integer) Seconds for the action itself (do NOT include travel time).
-- `dependencies`: (List of Integers) step_ids that must finish before this step. [] if none.
+- `dependencies`: (List of Integers) step_ids that must finish before this step. `[]` if none.
 - `description`: (String) Short explanation.
 
 **Extra Formatting Rule for `target_object` (CRITICAL):**
-- Normal actions: `target_object` must be one canonical object name.
-- Exception for drawer storage via `OPEN_DRAWER`: use `"<canonical_object> -> drawer"` (e.g., `"scissors -> drawer"`).
+- Normal actions: one canonical object name from object catalog.
+- Exception for drawer storage via `OPEN_DRAWER`: `"<canonical_object> -> drawer"` (for example, `"scissors -> drawer"`).
 
 **Example Input:**
-Task: "Get milk from Kitchen Fridge and pour it into a cup from Living Room Cabinet, then bring the cup to Living Room Table 1 and return the milk to Kitchen Fridge"
-Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {"item_name": "Cup", "location": "Living Room Cabinet", "location_id": 5}, {"item_name": "destination", "location": "Living Room Table 1", "location_id": 1}]
+Task: "Get milk from fridge and pour it into a cup from the bar counter, then bring the cup to the dining table and return the milk to the fridge"
+Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item_name": "cup", "location": "bar_counter", "location_id": 5}}, {{"item_name": "destination", "location": "dining_table", "location_id": 4}}]
 
 **Example Output:**
-{
+{{
   "subtasks": [
-    {
+    {{
       "step_id": 1,
       "action_type": "PICK",
       "target_object": "milk",
@@ -139,9 +166,9 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [],
-      "description": "Pick up the milk at Kitchen Fridge (location 6)."
-    },
-    {
+    "description": "Pick up the milk at the fridge (location 7)."
+    }},
+    {{
       "step_id": 2,
       "action_type": "PICK",
       "target_object": "cup",
@@ -149,41 +176,45 @@ Items: [{"item_name": "Milk", "location": "Kitchen Fridge", "location_id": 6}, {
       "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [],
-      "description": "Pick up the cup at Living Room Cabinet (location 5)."
-    },
-    {
+    "description": "Pick up the cup at the bar counter (location 5)."
+    }},
+    {{
       "step_id": 3,
       "action_type": "POUR",
       "target_object": "milk -> cup",
-      "location_id": 7,
+    "location_id": 7,
       "hand_used": null,
       "estimated_duration": 8,
       "dependencies": [1, 2],
-      "description": "Pour milk into the cup at Kitchen Table 1 (location 7). Requires holding both milk and cup first."
-    },
-    {
+    "description": "Pour milk into the cup at the fridge area (location 7). Requires holding both milk and cup first."
+    }},
+    {{
       "step_id": 4,
       "action_type": "PLACE",
       "target_object": "cup",
-      "location_id": 1,
+    "location_id": 4,
       "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [3],
-      "description": "Bring the cup with milk to Living Room Table 1 (location 1)."
-    },
-    {
+    "description": "Bring the cup with milk to the dining table (location 4)."
+    }},
+    {{
       "step_id": 5,
       "action_type": "PLACE",
       "target_object": "milk",
-      "location_id": 6,
+    "location_id": 7,
       "hand_used": null,
       "estimated_duration": 5,
       "dependencies": [3],
-      "description": "Return the milk bottle to Kitchen Fridge (location 6)."
-    }
+    "description": "Return the milk bottle to the fridge (location 7)."
+    }}
   ]
-}
+}}
 """
+
+
+# === 小任務拆解專用的 System Prompt ===
+SUBTASK_SYSTEM_PROMPT = _build_subtask_system_prompt()
 
 def decompose_task(high_level_task_json):
     """
