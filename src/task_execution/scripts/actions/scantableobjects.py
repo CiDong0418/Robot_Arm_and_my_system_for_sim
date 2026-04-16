@@ -40,7 +40,9 @@ class ScanTableObjects(BaseAction):
         self.save_dir = rospy.get_param("/task_execution/scan_table_objects/save_dir", "/tmp/scan_table_objects")
         self.model_name = rospy.get_param("/task_execution/scan_table_objects/model", "gpt-4o")
         self.assistant_reply_topic = rospy.get_param("/task_execution/scan_table_objects/assistant_reply_topic", "/assistant_reply")
+        self.scan_result_topic = rospy.get_param("/task_execution/scan_table_objects/scan_result_topic", "/scan_runtime_result")
         self._assistant_reply_pub = rospy.Publisher(self.assistant_reply_topic, RosString, queue_size=10)
+        self._scan_result_pub = rospy.Publisher(self.scan_result_topic, RosString, queue_size=10)
         self.client = self._build_openai_client()
         rospy.loginfo(
             f"[ScanTableObjects] camera={self.camera_name}, topic={self.image_topic}, compressed={self.use_compressed}"
@@ -53,9 +55,6 @@ class ScanTableObjects(BaseAction):
 
         location = self._resolve_location_id()
         location_name = self.LOCATION_NAME_MAP.get(location, f"Unknown Location {location}")
-
-        frame = self._capture_frame()
-
 
         if self.now_location_id["now"] != location:
             if location == 3 and self.now_location_id["now"] == 1:
@@ -75,36 +74,52 @@ class ScanTableObjects(BaseAction):
             self.now_location_id["now"] = location
         
         time.sleep(1)  # 等待移動穩定後再拍照
-        speech_text = "我看到小桌子上有一本書、一個蘋果、一根香蕉、一瓶水和一罐果汁。"
-        # if frame is None:
-        #     rospy.logerr("[ScanTableObjects] 拍照失敗，無法取得影像")
-        #     return False
+        frame = self._capture_frame()
+        if frame is None:
+            rospy.logerr("[ScanTableObjects] 拍照失敗，無法取得影像")
+            return False
 
-        # image_path = self._save_frame(frame)
-        # if image_path:
-        #     rospy.loginfo(f"[ScanTableObjects] 影像已儲存: {image_path}")
+        image_path = self._save_frame(frame)
+        if image_path:
+            rospy.loginfo(f"[ScanTableObjects] 影像已儲存: {image_path}")
 
-        # result = self._analyze_image_with_vlm(frame, location, location_name)
-        # if not result:
-        #     rospy.logerr("[ScanTableObjects] VLM 回傳失敗")
-        #     return False
+        result = self._analyze_image_with_vlm(frame, location, location_name)
 
-        # object_entries = self._normalize_objects(result.get("objects", []))
-        # object_names = [item["name"] for item in object_entries]
+        if result:
+            object_entries = self._normalize_objects(result.get("objects", []))
+            object_names = [item["name"] for item in object_entries]
+            self.scan_table_objects_memory["location_id"] = location
+            self.scan_table_objects_memory["objects"] = object_names
 
-        # self.scan_table_objects_memory["location"] = location
-        # self.scan_table_objects_memory["objects"] = object_names
-
-        # speech_text = str(result.get("speech_text", "")).strip()
-        # if not speech_text:
-        #     speech_text = self._build_default_speech(location_name, object_entries)
+            speech_text = str(result.get("speech_text", "")).strip()
+            if not speech_text:
+                speech_text = self._build_default_speech(location_name, object_entries)
+        else:
+            object_entries = []
+            speech_text = "我已完成掃描，但目前無法辨識到可用物件資訊。"
 
         self._assistant_reply_pub.publish(RosString(data=speech_text))
+
+        runtime_payload = {
+            "scan_task_global_id": self.global_id,
+            "parent_id": self.task_data.get("parent_id"),
+            "location_id": location,
+            "location_name": location_name,
+            "objects": object_entries,
+            "speech_text": speech_text,
+            "image_path": image_path,
+            "runtime_replan_enabled": bool(self.task_data.get("runtime_replan_enabled", False)),
+            "post_scan_instruction": self.task_data.get("post_scan_instruction", ""),
+            "urgency_level": self.task_data.get("urgency_level", "normal"),
+            "urgency_score": self.task_data.get("urgency_score", 0),
+        }
+        self._scan_result_pub.publish(RosString(data=json.dumps(runtime_payload, ensure_ascii=False)))
 
         rospy.loginfo(f"[ScanTableObjects] 位置 {location} ({location_name}) 掃描完成")
         rospy.loginfo(f"[ScanTableObjects] 偵測物件: {object_entries}")
         rospy.loginfo(f"[ScanTableObjects] 已更新 scan_table_objects_memory: {self.scan_table_objects_memory}")
         rospy.loginfo(f"[ScanTableObjects] 已發布 assistant_reply: {speech_text}")
+        rospy.loginfo(f"[ScanTableObjects] 已發布 scan_runtime_result: replan={runtime_payload['runtime_replan_enabled']}")
         return True
 
     def _build_openai_client(self):

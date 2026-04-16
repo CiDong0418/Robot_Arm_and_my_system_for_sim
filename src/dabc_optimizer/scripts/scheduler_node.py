@@ -115,7 +115,8 @@ class SchedulerNode:
                         except Exception:
                             global_deps.append(str(d))
                 
-                self.task_lookup[t_id] = {
+                task_payload = dict(task)
+                task_payload.update({
                     'estimated_duration': task.get('estimated_duration', 10),
                     'hand_used': task.get('hand_used', None),
                     'dependencies': global_deps,
@@ -125,7 +126,8 @@ class SchedulerNode:
                     'global_id': t_id,
                     'parent_id': parent_id,
                     'description': task.get('description', '')
-                }
+                })
+                self.task_lookup[t_id] = task_payload
                 
             rospy.loginfo(f"[Scheduler] Received batch. Total tasks in buffer: {len(self.task_buffer)}")
             
@@ -154,7 +156,8 @@ class SchedulerNode:
                         
                         t_id = task['global_id']
                         # 已經在 execution queue 的 task，其 dependencies 應該已經轉好全域 ID 了，直接取用
-                        self.task_lookup[t_id] = {
+                        task_payload = dict(task)
+                        task_payload.update({
                             'estimated_duration': task.get('estimated_duration', 10),
                             'hand_used': task.get('hand_used', None),
                             'dependencies': task.get('dependencies', []),
@@ -164,7 +167,8 @@ class SchedulerNode:
                             'global_id': t_id,
                             'parent_id': task.get('parent_id'),
                             'description': task.get('description', '')
-                        }
+                        })
+                        self.task_lookup[t_id] = task_payload
         except Exception as e:
             # 如果 node 還沒啟動或是找不到 service，就當作沒有舊任務
             pass
