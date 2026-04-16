@@ -56,6 +56,17 @@ RULE 5 — `involved_items` MUST LIST STARTING LOCATIONS:
 Use each object's initial location, not its future location.
 Special tokens allowed: `pour_at`, `destination`, `return_to`, `User`.
 
+RULE 6 - OBSERVATION-GATED TASKS MUST STAY AS ONE GATE TASK:
+If the command includes "先看/先掃描/確認後再做" style logic (for example: if found do A, else do B),
+you MUST output exactly ONE high-level gate task first, instead of expanding both branches now.
+That gate task must:
+- Keep the scan/check action and decision policy in the same task description.
+- Include this exact runtime marker text in `description`: `先掃描，掃描後逐項插入後續任務`.
+- Describe both branches explicitly in the same description using natural language:
+    "若看到 X，執行 ...；若沒看到 X，執行 ...".
+- Preserve final common goals (for example return object to fridge) in that same description.
+- Keep `involved_items` focused on the scan location and known initial object locations only.
+
 ==============================================================
 SECTION 2 — CANONICAL LOCATIONS
 ==============================================================
@@ -106,6 +117,8 @@ Each task must contain:
 - `description` (string)
 - `involved_items` (array)
 - `time_constraints` (object)
+- `urgency_level` (string: `super_urgent` / `priority` / `normal`)
+- `urgency_score` (integer: 10 / 3 / 0)
 
 For `involved_items`:
 - `item_name` must use lowercase English object names from the catalog.
@@ -114,7 +127,21 @@ For `involved_items`:
 - `location_id` must match the location table.
 
 ==============================================================
-SECTION 5 — DECISION GUIDELINES
+SECTION 5 — URGENCY SCORING RULES
+==============================================================
+
+Assign urgency for each task using the original user request text:
+- Level 1 `super_urgent` with score `10`:
+  Trigger when the input includes words like `馬上`, `立刻`, `right now`, `immediately`.
+- Level 2 `priority` with score `3`:
+  Trigger when the input includes words like `可以優先`, `等等先幫我`, `先幫我`.
+- Level 3 `normal` with score `0`:
+  Any task that does not match Level 1 or Level 2.
+
+If multiple urgency cues appear, always use the highest level.
+
+==============================================================
+SECTION 6 — DECISION GUIDELINES
 ==============================================================
 
 - Keep all steps involving the same physical object in one task.
@@ -122,64 +149,10 @@ SECTION 5 — DECISION GUIDELINES
 - If a task has a `destination`, the destination must appear in `involved_items`.
 - If a task has a return location, the `return_to` entry must appear in `involved_items`.
 - If a task involves two independent object groups, they may be separated into two tasks.
+- For observation-gated commands, do NOT pre-split into "found" and "not found" separate tasks.
+- For observation-gated commands, do NOT emit multiple parallel alternatives as separate tasks.
 
 Return only the JSON object. No markdown.
-"""
-      "description": "Step 1: Pick up Medicine Bottle from Room A Desk (location_id 10). Step 2: Carry the Medicine Bottle to Living Room Sofa 1 (location_id 3) and hand it over to the User. Step 3: After handover, wait for user to take medicine. Step 4: Pick up the (now empty) Medicine Bottle from the user at Living Room Sofa 1. Step 5: Bring the empty Medicine Bottle to Kitchen Table 2 (location_id 8). Note: Step 4 depends on Step 3 (handover must complete first); Step 5 depends on Step 4.",
-      "involved_items": [
-        {"item_name": "Medicine Bottle", "location": "Room A Desk",        "location_id": 10},
-        {"item_name": "User",            "location": "Living Room Sofa 1", "location_id": 3},
-        {"item_name": "destination",     "location": "Kitchen Table 2",    "location_id": 8}
-      ],
-      "time_constraints": {"start_after": null, "finish_before": null}
-    }
-  ]
-}
-
---- EXAMPLE D: Multiple objects, some shared interactions ---
-
-Input:
-"Make coffee: get the coffee powder from Kitchen Table 1 and the mug from Kitchen Table 2.
- Mix coffee in the mug at Kitchen Table 1.
- Bring the mug to Room B Desk.
- Put the coffee powder back on Kitchen Table 1."
-
-Analysis:
-  - Coffee powder and mug are BOTH used in the mixing step → they share an interaction → ONE task.
-
-✅ CORRECT Output:
-{
-  "tasks": [
-    {
-      "id": 1,
-      "name": "Prepare Coffee and Deliver to Room B",
-      "description": "Step 1: Pick up Coffee Powder from Kitchen Table 1 (location_id 7). Step 2: Pick up Mug from Kitchen Table 2 (location_id 8). Step 3: Mix coffee powder into the mug at Kitchen Table 1 (location_id 7) — depends on Step 1 and Step 2. After mixing, Coffee Powder is at Kitchen Table 1 and Mug now contains coffee. Step 4: Deliver the Mug (with coffee) to Room B Desk (location_id 12) — depends on Step 3. Step 5: Return Coffee Powder to Kitchen Table 1 (location_id 7) — depends on Step 3 (mixing must be complete; powder is already at Kitchen Table 1 so this is a confirmation step).",
-      "involved_items": [
-        {"item_name": "Coffee Powder", "location": "Kitchen Table 1",  "location_id": 7},
-        {"item_name": "Mug",           "location": "Kitchen Table 2",  "location_id": 8},
-        {"item_name": "pour_at",       "location": "Kitchen Table 1",  "location_id": 7},
-        {"item_name": "destination",   "location": "Room B Desk",      "location_id": 12},
-        {"item_name": "return_to",     "location": "Kitchen Table 1",  "location_id": 7}
-      ],
-      "time_constraints": {"start_after": null, "finish_before": null}
-    }
-  ]
-}
-
-==============================================================
-SECTION 5 — QUICK CHECKLIST BEFORE OUTPUTTING
-==============================================================
-
-Before writing your final JSON output, verify:
-[ ] Does any single physical object appear in MORE THAN ONE task? → If yes, MERGE those tasks.
-[ ] Does every task's `description` include the FULL step-by-step flow?
-[ ] Does every step in `description` that depends on a previous step say "depends on Step X"?
-[ ] Does `involved_items` include ALL objects the robot will physically touch?
-[ ] Are ALL `location` values from the 12 allowed locations? No invented names?
-[ ] Are ALL `location_id` values the correct integers (1-12)?
-[ ] For POUR/MIX tasks: is there a `pour_at` entry in `involved_items`?
-[ ] For DELIVERY tasks: is there a `destination` entry in `involved_items`?
-[ ] For RETURN tasks: is there a `return_to` entry in `involved_items`?
 """
 
 def get_llm_task_plan(user_input):

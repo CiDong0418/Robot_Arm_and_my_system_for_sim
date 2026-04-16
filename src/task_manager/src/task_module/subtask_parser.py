@@ -6,7 +6,12 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from colorama import Fore, Style
 
-from task_module.domain_catalog import ACTION_CATALOG, OBJECT_CATALOG, OPERABLE_LOCATIONS
+from task_module.domain_catalog import (
+    ACTION_CATALOG,
+    OBJECT_CATALOG,
+    OPERABLE_LOCATIONS,
+    get_action_execution_time_sec,
+)
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +37,23 @@ def _format_action_lines():
             for action in ACTION_CATALOG
         ]
     )
+
+
+def _build_action_duration_map():
+    duration_map = {}
+    for action in ACTION_CATALOG:
+        signature = str(action.get("signature", "")).strip()
+        action_name = signature.split("(", 1)[0].strip().upper()
+        action_id = action.get("id")
+        if not action_name or action_id is None:
+            continue
+        duration = get_action_execution_time_sec(action_id, default=None)
+        if duration is not None:
+            duration_map[action_name] = int(duration)
+    return duration_map
+
+
+ACTION_DEFAULT_DURATION_SEC = _build_action_duration_map()
 
 
 def _format_object_lines():
@@ -134,6 +156,15 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 - If `target_object = "scissors"` appears, enforce `hand_used = "Right_Arm"`.
 - Otherwise set `hand_used = null`.
 
+**Runtime Replan Gate Rule (CRITICAL):**
+If the high-level task description indicates "scan/check first, then decide" behavior
+(examples: contains `先掃描`, `掃描後`, `看完後`, `根據看到`, `插入後續`, `逐項插入`),
+you MUST generate ONLY the immediate scan gate actions in this first pass.
+- First action must be `SCAN_TABLE_OBJECTS` at the requested inspection location.
+- Do NOT expand either branch actions yet (do not output both "if found" and "if not found" flows).
+- Keep scan action dependencies empty unless there are strict prerequisites.
+- Put short branch intent summary inside scan `description` so runtime replan can continue after scan.
+
 **Output Format:**
 Output a JSON object with a `subtasks` list. Each subtask must have:
 - `step_id`: (Integer) 1, 2, 3...
@@ -144,8 +175,11 @@ Output a JSON object with a `subtasks` list. Each subtask must have:
 - `location_id`: (Integer {min_location_id}-{max_location_id}) Required for every action.
 - `hand_used`: (String or null). Use null unless a rule forces a specific hand.
 - `estimated_duration`: (Integer) Seconds for the action itself (do NOT include travel time).
+  - Must match the canonical action default duration table from system catalog.
 - `dependencies`: (List of Integers) step_ids that must finish before this step. `[]` if none.
 - `description`: (String) Short explanation.
+- `urgency_level`: (String) Inherit from high-level task (`super_urgent` / `priority` / `normal`).
+- `urgency_score`: (Integer) Inherit from high-level task (10 / 3 / 0).
 
 **Extra Formatting Rule for `target_object` (CRITICAL):**
 - Normal actions: one canonical object name from object catalog.
@@ -164,7 +198,7 @@ Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item
       "target_object": "milk",
       "location_id": 6,
       "hand_used": null,
-      "estimated_duration": 5,
+      "estimated_duration": 55,
       "dependencies": [],
     "description": "Pick up the milk at the fridge (location 7)."
     }},
@@ -174,7 +208,7 @@ Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item
       "target_object": "cup",
       "location_id": 5,
       "hand_used": null,
-      "estimated_duration": 5,
+      "estimated_duration": 55,
       "dependencies": [],
     "description": "Pick up the cup at the bar counter (location 5)."
     }},
@@ -184,7 +218,7 @@ Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item
       "target_object": "milk -> cup",
     "location_id": 7,
       "hand_used": null,
-      "estimated_duration": 8,
+      "estimated_duration": 110,
       "dependencies": [1, 2],
     "description": "Pour milk into the cup at the fridge area (location 7). Requires holding both milk and cup first."
     }},
@@ -194,7 +228,7 @@ Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item
       "target_object": "cup",
     "location_id": 4,
       "hand_used": null,
-      "estimated_duration": 5,
+      "estimated_duration": 35,
       "dependencies": [3],
     "description": "Bring the cup with milk to the dining table (location 4)."
     }},
@@ -204,7 +238,7 @@ Items: [{{"item_name": "milk", "location": "fridge", "location_id": 7}}, {{"item
       "target_object": "milk",
     "location_id": 7,
       "hand_used": null,
-      "estimated_duration": 5,
+      "estimated_duration": 35,
       "dependencies": [3],
     "description": "Return the milk bottle to the fridge (location 7)."
     }}
@@ -228,6 +262,16 @@ def decompose_task(high_level_task_json):
     constraints = high_level_task_json.get('time_constraints', {})
     description = high_level_task_json.get('description', '')
 
+    # 承接高層任務的緊急度，並確保分數一定有值可用於 DABC fitness
+    urgency_level = high_level_task_json.get('urgency_level', 'normal')
+    urgency_score = high_level_task_json.get('urgency_score')
+    if urgency_score is None:
+      urgency_score = {
+        'super_urgent': 10,
+        'priority': 3,
+        'normal': 0,
+      }.get(urgency_level, 0)
+
     print(f"{Fore.CYAN}[SubTask] Decomposing Task {parent_id}: {task_name}...{Style.RESET_ALL}")
     
     # llm
@@ -236,6 +280,8 @@ def decompose_task(high_level_task_json):
     user_content = f"""
     High-Level Task: "{task_name}"
     Description: {description}
+    Urgency Level: {urgency_level}
+    Urgency Score: {urgency_score}
     
     Involved Items & Locations (CRITICAL): {items_str}
     Time Constraints: {json.dumps(constraints)}
@@ -259,36 +305,45 @@ def decompose_task(high_level_task_json):
         
         final_subtasks = []
         
-        # 加上 parent_id 和 global_id
+        # 加上 parent_id、global_id 與 urgency 欄位
         if "subtasks" in parsed_data:
-            for sub in parsed_data["subtasks"]:
-                # 綁定父親 (知道這是哪個大任務拆出來的)
-                sub["parent_id"] = parent_id
+          for sub in parsed_data["subtasks"]:
+            # 綁定父親 (知道這是哪個大任務拆出來的)
+            sub["parent_id"] = parent_id
 
-                # 建立全域唯一 ID (格式: 大任務ID_小任務步驟) 例如: 105_1
-                sub["global_id"] = f"{parent_id}_{sub['step_id']}"
+            # 強制使用 domain_catalog 的動作預設時間，避免 LLM 自行估時漂移。
+            action_type = str(sub.get("action_type", "")).strip().upper()
+            default_duration = ACTION_DEFAULT_DURATION_SEC.get(action_type)
+            if default_duration is not None:
+              sub["estimated_duration"] = default_duration
 
-                # 將 local dependencies (例如 [1,2]) 轉換為全域 ID 字串 (例如 ["105_1","105_2"])。
-                # 這樣 downstream 的 scheduler/optimizer 不需要再猜依賴的命名空間。
-                orig_deps = sub.get('dependencies', []) or []
-                global_deps = []
-                for d in orig_deps:
-                    # 如果依賴已經是全域格式 (像 "1_2")，就直接保留
-                    if isinstance(d, str) and '_' in d:
-                        global_deps.append(d)
-                    else:
-                        try:
-                            di = int(d)
-                            global_deps.append(f"{parent_id}_{di}")
-                        except Exception:
-                            # 萬一不是數字也不是包含 '_' 的字串，保護式地轉成字串並加上 parent
-                            global_deps.append(f"{parent_id}_{str(d)}")
+            # 每個子任務都繼承高層緊急度，方便 downstream 直接讀取 fitness 參數
+            sub["urgency_level"] = urgency_level
+            sub["urgency_score"] = urgency_score
 
-                sub['dependencies'] = global_deps
+            # 建立全域唯一 ID (格式: 大任務ID_小任務步驟) 例如: 105_1
+            sub["global_id"] = f"{parent_id}_{sub['step_id']}"
 
-                final_subtasks.append(sub)
+            # 將 local dependencies (例如 [1,2]) 轉換為全域 ID 字串 (例如 ["105_1","105_2"])。
+            # 這樣 downstream 的 scheduler/optimizer 不需要再猜依賴的命名空間。
+            orig_deps = sub.get('dependencies', []) or []
+            global_deps = []
+            for d in orig_deps:
+              # 如果依賴已經是全域格式 (像 "1_2")，就直接保留
+              if isinstance(d, str) and '_' in d:
+                global_deps.append(d)
+              else:
+                try:
+                  di = int(d)
+                  global_deps.append(f"{parent_id}_{di}")
+                except Exception:
+                  # 萬一不是數字也不是包含 '_' 的字串，保護式地轉成字串並加上 parent
+                  global_deps.append(f"{parent_id}_{str(d)}")
 
-            return final_subtasks
+            sub['dependencies'] = global_deps
+            final_subtasks.append(sub)
+
+          return final_subtasks
         else:
             print(f"{Fore.RED}[Error] LLM returned valid JSON but no 'subtasks' list.{Style.RESET_ALL}")
             return []
