@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib import animation
 
+from task_module.domain_catalog import LOCATION_TRAVEL_TIME_EDGES_SEC
+
 
 class TopologicalMap:
     def __init__(self):
@@ -71,37 +73,7 @@ class TopologicalMap:
 
     def _load_map_data(self):
         """載入相鄰節點移動時間 (秒)，由 Dijkstra 求最短路徑"""
-        edges = [
-            # 客廳 / 玄關 / 餐廳
-            (18, 1, 25),
-            (18, 6, 30),
-            (1, 2, 30),
-            (2, 3, 35),
-            (4, 1, 60),
-            (2, 5, 60),
-            (4, 5, 20),
-            (4, 6, 28),
-            (4, 20, 40),
-            (5, 20, 30),
-            # 廚房
-            (5, 8, 35),
-            (8, 9, 25),
-            (8, 7, 20),
-            # 走廊連到各房間
-            (2, 19, 40),
-            (5, 19, 45),
-            (19, 10, 15),
-            (19, 11, 180),
-            (19, 16, 140),
-            (11, 12, 45),
-            (11, 13, 25),
-            (19, 14, 110),
-            (14, 15, 20),
-            (11, 16, 110),
-            (16, 17, 35),
-        ]
-        
-        for u, v, t in edges:
+        for u, v, t in LOCATION_TRAVEL_TIME_EDGES_SEC:
             self._add_edge(u, v, t)
 
     def get_location_name(self, loc_id):
@@ -113,13 +85,13 @@ class TopologicalMap:
         # 如果原地不動，時間為 0
         if start_id == end_id:
             return 0
-            
-        # 查詢時間
+
+        # 先查直連邊，沒有就回傳最短路徑時間。
         if end_id in self.travel_times.get(start_id, {}):
             return self.travel_times[start_id][end_id]
-        else:
-            print(f"[警告] 找不到地點 {start_id} 到 {end_id} 的移動時間！")
-            return float('inf')
+
+        _, total_time = self.get_shortest_path(start_id, end_id)
+        return total_time
 
     def get_shortest_path(self, start_id, end_id):
         """使用 Dijkstra 計算最短路徑，回傳 (path_ids, total_time)"""

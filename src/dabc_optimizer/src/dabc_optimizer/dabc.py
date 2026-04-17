@@ -4,10 +4,10 @@ import math
 from .fitness import TaskScheduler
 
 class DABC:
-    def __init__(self, task_lookup, population_size=20, max_iterations=100, limit=20, initial_seq=None):
+    def __init__(self, task_lookup, population_size=20, max_iterations=100, limit=20, initial_seq=None, w1=1.0, w2=1.0, w3=1.0, w4=1.0):
         
         self.task_ids = list(task_lookup.keys())
-        self.scheduler = TaskScheduler(task_lookup)
+        self.scheduler = TaskScheduler(task_lookup, w1=w1, w2=w2, w3=w3, w4=w4)
         self.pop_size = population_size  # 族群大小
         self.max_iter = max_iterations 
         self.limit = limit  # 偵查蜂重複次數限制 如果一個解連續 limit 次沒變好，就放棄它
@@ -21,9 +21,9 @@ class DABC:
             if i == 0 and initial_seq is not None:
                 # 如果有提供初始解，第一個解就用它
                 individual = copy.deepcopy(initial_seq)
-                llm_fit = self.scheduler.calculate_makespan(individual)
+                llm_fit = self.scheduler.calculate_fitness(individual)
                 print(f"==========================================")
-                print(f"🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始成績: {llm_fit} 秒")
+                print(f"🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: {llm_fit}")
                 print(f"==========================================")
 
             # individual = copy.deepcopy(self.task_ids)
@@ -35,7 +35,7 @@ class DABC:
             
             self.population.append(individual)
             # 計算適應值
-            fit = self.scheduler.calculate_makespan(individual)
+            fit = self.scheduler.calculate_fitness(individual)
             self.fitness_values.append(fit)   # 存放適應值
             self.trial_counters.append(0) # 初始化計數器為 0 紀錄每一個解沒有進步的次數
 
@@ -63,7 +63,7 @@ class DABC:
             
             # 每訓練十次印出來一次
             if iteration % 10 == 0:
-                print(f"Iter {iteration}: Best Makespan = {self.global_best_fit}")
+                print(f"Iter {iteration}: Best Fitness = {self.global_best_fit}")
 
         return self.global_best_sol, self.global_best_fit
 
@@ -76,8 +76,8 @@ class DABC:
         """觀察蜂：根據適應度機率選擇解進行搜尋 (輪盤法)"""
         
         # 計算被選擇的機率 (Probability Calculation)
-        # 因為我們的目標是「最小化時間」，所以時間越短，機率要越大
-        # 公式轉換： prob = (1 / makespan) / sum(1 / makespan)
+        # 因為我們的目標是「最小化 fitness」，所以 fitness 越低，機率要越大
+        # 公式轉換： prob = (1 / fitness) / sum(1 / fitness)
         # 為了避免除以無限大 (無效解)，我們給予極小的機率
         
         inv_fitness = []
@@ -106,7 +106,7 @@ class DABC:
             if self.trial_counters[i] > self.limit:
                 # 這裡用的不是隨機，是合法
                 new_sol = self._generate_topological_individual()
-                new_fit = self.scheduler.calculate_makespan(new_sol)
+                new_fit = self.scheduler.calculate_fitness(new_sol)
                 
                 # 重置狀態
                 self.population[i] = new_sol
@@ -121,10 +121,10 @@ class DABC:
 
         # 產生鄰近解 (Mutation)
         new_sol = self._mutate(current_sol)
-        new_fit = self.scheduler.calculate_makespan(new_sol)
+        new_fit = self.scheduler.calculate_fitness(new_sol)
 
         # 貪婪選擇 (Greedy Selection)
-        # 如果新解比較好 (時間較短)，就接受；否則 trial + 1
+        # 如果新解比較好 (fitness 較低)，就接受；否則 trial + 1
         if new_fit < current_fit:
             self.population[index] = new_sol
             self.fitness_values[index] = new_fit

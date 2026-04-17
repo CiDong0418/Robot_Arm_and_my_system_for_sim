@@ -84,6 +84,148 @@ ACTION_CATALOG = [
     },
 ]
 
+
+# Canonical action execution times (seconds) used by fitness calculation.
+# Key: action id in ACTION_CATALOG
+ACTION_EXECUTION_TIME_SEC = {
+    1: 55,
+    2: 35,
+    3: 110,
+    4: 80,
+    5: 45,
+    6: 45,
+    7: 60,
+    8: 80,
+    9: 115,
+    10: 20,
+    11: 110,
+    12: 90,
+    13: 60,
+    14: 15,
+    15: 30,
+}
+
+
+def get_action_execution_time_sec(action_id, default=None):
+    """Return configured execution time (seconds) for an action id."""
+    return ACTION_EXECUTION_TIME_SEC.get(action_id, default)
+
+
+# Object risk coefficients used by fitness calculation.
+# Higher value means the object should be handled more carefully.
+OBJECT_RISK_COEF = {
+    # Risk level 3: liquid containers that should avoid long travel.
+    "water_cup": 3,
+    "drink_cup": 3,
+    "cup": 3,
+    "green_cup": 3,
+
+    # Risk level 2: sharp tools.
+    "scissors": 2,
+    "utility_knife": 2,
+
+    # Risk level 1: seasonings / shakers.
+    "salt_shaker": 1,
+    "pepper_shaker": 1,
+}
+
+
+def get_object_risk_coef(object_name, default=0):
+    """Return configured risk coefficient for an object name."""
+    return OBJECT_RISK_COEF.get(object_name, default)
+
+
+# Canonical movement-distance list between directly connected locations.
+# Keep this separate from time; users can fill values later.
+# Tuple format: (from_location_id, to_location_id, distance_m)
+LOCATION_DISTANCE_EDGES_M = [
+    # Example entry format (keep commented until real values are provided):
+    # (1, 2, 3.5),
+    (18, 1, 1.5),
+    (18, 6, 2.5),
+    (1, 2, 2),
+    (2, 3, 1.5),
+    (4, 1, 3.5),
+    (2, 5, 3.7),
+    (4, 5, 1.7),
+    (4, 6, 1.5),
+    (4, 20, 2),
+    (5, 20, 2),
+    # Kitchen area
+    (5, 8, 1.8),
+    (8, 9, 1.8),
+    (8, 7, 0.8),
+    # Hallway and rooms
+    (2, 19, 3),
+    (5, 19, 3.1),
+    (19, 10, 1.5),
+    (19, 11, 6.5),
+    (19, 16, 5.0),
+    (11, 12, 4.0),
+    (11, 13, 2.5),
+    (19, 14, 3.5),
+    (14, 15, 1.5),
+    (11, 16, 5.5),
+    (16, 17, 2.0),
+]
+
+_LOCATION_DISTANCE_LOOKUP_M = {}
+for src_id, dst_id, dist_m in LOCATION_DISTANCE_EDGES_M:
+    _LOCATION_DISTANCE_LOOKUP_M[(src_id, dst_id)] = dist_m
+    _LOCATION_DISTANCE_LOOKUP_M[(dst_id, src_id)] = dist_m
+
+
+def get_direct_distance_m(start_location_id, end_location_id, default=None):
+    """Return direct edge distance (meters) between two locations."""
+    if start_location_id == end_location_id:
+        return 0.0
+    return _LOCATION_DISTANCE_LOOKUP_M.get((start_location_id, end_location_id), default)
+
+
+# Canonical movement-time list (seconds) between directly connected locations.
+# For non-adjacent locations, combine edges (for example with shortest-path).
+LOCATION_TRAVEL_TIME_EDGES_SEC = [
+    # Living room / entry / dining area
+    (18, 1, 25),
+    (18, 6, 30),
+    (1, 2, 30),
+    (2, 3, 35),
+    (4, 1, 60),
+    (2, 5, 60),
+    (4, 5, 20),
+    (4, 6, 28),
+    (4, 20, 40),
+    (5, 20, 30),
+    # Kitchen area
+    (5, 8, 35),
+    (8, 9, 25),
+    (8, 7, 20),
+    # Hallway and rooms
+    (2, 19, 40),
+    (5, 19, 45),
+    (19, 10, 15),
+    (19, 11, 180),
+    (19, 16, 140),
+    (11, 12, 45),
+    (11, 13, 25),
+    (19, 14, 110),
+    (14, 15, 20),
+    (11, 16, 110),
+    (16, 17, 35),
+]
+
+_LOCATION_TRAVEL_TIME_LOOKUP_SEC = {}
+for src_id, dst_id, t_sec in LOCATION_TRAVEL_TIME_EDGES_SEC:
+    _LOCATION_TRAVEL_TIME_LOOKUP_SEC[(src_id, dst_id)] = t_sec
+    _LOCATION_TRAVEL_TIME_LOOKUP_SEC[(dst_id, src_id)] = t_sec
+
+
+def get_direct_travel_time_sec(start_location_id, end_location_id, default=None):
+    """Return direct edge movement time (seconds) between two locations."""
+    if start_location_id == end_location_id:
+        return 0
+    return _LOCATION_TRAVEL_TIME_LOOKUP_SEC.get((start_location_id, end_location_id), default)
+
 LOCATION_CATALOG = [
     {"location_id": 1, "zh_name": "電視櫃", "location_name": "tv_cabinet"},
     {"location_id": 2, "zh_name": "茶几", "location_name": "coffee_table"},
