@@ -13,7 +13,7 @@ def main():
     rospy.init_node('user_input_node', anonymous=True)
     
     
-    pub = rospy.Publisher('/user_command', String, queue_size=10)
+    pub = rospy.Publisher('/user_command', String, queue_size=50)
     
     print(f"{Fore.GREEN}=== ROS Task Input Node Started ==={Style.RESET_ALL}")
     print(f"{Fore.YELLOW}[Input] Please type your command (e.g., 'After 2pm, clean the room'):{Style.RESET_ALL}")

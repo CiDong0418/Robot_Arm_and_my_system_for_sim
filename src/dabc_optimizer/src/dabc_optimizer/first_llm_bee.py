@@ -47,6 +47,7 @@ Your objective is to generate a SINGLE, flat list of Task IDs representing the o
 6. **Open Drawer Rule (Important):** `OPEN_DRAWER` can ONLY use Left_Arm and the left hand must be empty. If Left_Arm is holding something, the scheduler will insert STORE_ON_TRAY first. Avoid ordering that would make this impossible.
 7. **Tray Rule (Important):** When both hands are full and another PICK is required, the downstream scheduler will insert STORE_ON_TRAY to free a hand. Do NOT add this yourself; just avoid ordering that would force impossible dependency violations.
 8. **Cross-Task Interleaving:** You are encouraged to mix subtasks from different high-level goals (different Task ID prefixes) to minimize makespan, as long as you respect dependencies and hand capacity limits.
+9. **No Parent-Block Ordering:** Do NOT output sequences grouped by `parent_id` blocks (for example finish all `8_*` then all `9_*`). If dependencies allow, interleave tasks across parents.
 
 **Examples:**
 Input task IDs: ["1_1"=PICK(cup), "1_2"=PICK(cola), "1_3"=PICK(scissors), "1_4"=PLACE(cup), "1_5"=PLACE(cola), "1_6"=OPEN_DRAWER(scissors->drawer)]

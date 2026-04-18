@@ -3,6 +3,7 @@ import rospy
 import sys
 import os
 import json
+import threading
 from std_msgs.msg import String
 from std_srvs.srv import Trigger, TriggerResponse
 from datetime import datetime
@@ -19,9 +20,79 @@ from dabc_optimizer.first_llm_bee import get_llm_initial_schedule
 from dabc_optimizer.fitness import TaskScheduler
 
 
+class _TeeStream:
+    """Write console output to both terminal and a persistent text file."""
+
+    def __init__(self, stream, file_handle):
+        self._stream = stream
+        self._file_handle = file_handle
+        self._lock = threading.Lock()
+
+    def write(self, data):
+        if not data:
+            return 0
+        with self._lock:
+            try:
+                self._stream.write(data)
+            except Exception:
+                pass
+            try:
+                self._file_handle.write(data)
+            except Exception:
+                pass
+        return len(data)
+
+    def flush(self):
+        with self._lock:
+            try:
+                self._stream.flush()
+            except Exception:
+                pass
+            try:
+                self._file_handle.flush()
+            except Exception:
+                pass
+
+    def isatty(self):
+        try:
+            return self._stream.isatty()
+        except Exception:
+            return False
+
+
+def _enable_terminal_capture(log_path):
+    """Redirect stdout/stderr to tee stream so rosrun output is also persisted."""
+    if getattr(sys.stdout, "_scheduler_tee_enabled", False):
+        return
+
+    abs_log_path = os.path.abspath(log_path)
+    os.makedirs(os.path.dirname(abs_log_path), exist_ok=True)
+    log_handle = open(abs_log_path, 'a', encoding='utf-8', buffering=1)
+
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    sys.stdout = _TeeStream(original_stdout, log_handle)
+    sys.stderr = _TeeStream(original_stderr, log_handle)
+
+    setattr(sys.stdout, "_scheduler_tee_enabled", True)
+    setattr(sys.stderr, "_scheduler_tee_enabled", True)
+
+
 class SchedulerNode:
     def __init__(self):
         rospy.init_node('dabc_scheduler_node')
+
+        default_terminal_log_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../../task_manager/scheduler_terminal_output.txt')
+        )
+        self.terminal_log_path = os.path.abspath(
+            rospy.get_param('~terminal_log_path', default_terminal_log_path)
+        )
+        _enable_terminal_capture(self.terminal_log_path)
+
+        self.population_size = int(rospy.get_param('~population_size', 20))
+        self.max_iterations = int(rospy.get_param('~max_iterations', 100))
+        self.limit = int(rospy.get_param('~limit', 25))
         
         # 1. 任務緩衝區 (Buffer)
         self.task_buffer = []      # 存原始 JSON 物件
@@ -44,6 +115,11 @@ class SchedulerNode:
         
         rospy.loginfo("[Scheduler] Ready. Collecting tasks... Call 'start_scheduling' to optimize.")
         rospy.loginfo(f"📝 排程 log 將儲存至: {self._log_path}")
+        rospy.loginfo(f"📝 終端輸出將同步寫入: {self.terminal_log_path}")
+        rospy.loginfo(
+            f"[Scheduler] DABC params: population_size={self.population_size}, "
+            f"max_iterations={self.max_iterations}, limit={self.limit}"
+        )
 
     def _init_log(self):
         """每次節點啟動時清空排程 log 檔"""
@@ -53,12 +129,15 @@ class SchedulerNode:
         except Exception as error:
             rospy.logwarn(f"[Scheduler] 排程 log 初始化失敗: {error}")
 
-    def _save_to_log(self, tasks):
+    def _save_to_log(self, tasks, diagnostics=None):
         """把本次排程結果追加寫入 log 檔"""
-        self._log_all.append({
+        payload = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "schedule": tasks,
-        })
+        }
+        if diagnostics is not None:
+            payload["optimizer_diagnostics"] = diagnostics
+        self._log_all.append(payload)
         try:
             with open(self._log_path, 'w', encoding='utf-8') as f:
                 json.dump(self._log_all, f, ensure_ascii=False, indent=2)
@@ -152,6 +231,11 @@ class SchedulerNode:
                     # 將舊任務加進 buffer 及 lookup，準備跟新任務混和排程
                     for task in old_tasks:
                         task = self.normalize_task_fields(task)
+                        # Cross-run rescheduling policy:
+                        # discard previous hand assignment so optimizer/simulator
+                        # can re-assign hands from scratch for this new run.
+                        task['hand_used'] = None
+                        task['hand'] = None
                         self.task_buffer.append(task)
                         
                         t_id = task['global_id']
@@ -193,10 +277,18 @@ class SchedulerNode:
 
 
         # 1. 初始化 DABC
-        optimizer = DABC(self.task_lookup, population_size=10, max_iterations=50, initial_seq=llm_initial_sequence)
+        optimizer = DABC(
+            self.task_lookup,
+            population_size=self.population_size,
+            max_iterations=self.max_iterations,
+            limit=self.limit,
+            initial_seq=llm_initial_sequence,
+        )
         
         # 2. 執行運算
         best_seq, best_time = optimizer.optimize() # 開始進行abc演算法的計算，回傳的是最佳順序跟時間
+        diagnostics = optimizer.get_diagnostics()
+        rospy.loginfo(f"[Scheduler][DABC diagnostics] {json.dumps(diagnostics, ensure_ascii=False)}")
         
         # 3. 處理結果
         if best_time == float('inf'):# 檢查是否找到有效解
@@ -216,7 +308,7 @@ class SchedulerNode:
         # 5. 發布結果
         json_output = json.dumps(optimized_tasks)
         self.result_pub.publish(json_output)
-        self._save_to_log(optimized_tasks)
+        self._save_to_log(optimized_tasks, diagnostics=diagnostics)
         
         result_msg = f"Optimization Done! Makespan: {best_time}s. Sequence: {best_seq}"
         rospy.loginfo(result_msg)

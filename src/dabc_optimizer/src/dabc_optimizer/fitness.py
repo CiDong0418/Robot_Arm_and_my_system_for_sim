@@ -1,6 +1,21 @@
 import sys
 import os
 import heapq
+import copy
+import json
+import threading
+from datetime import datetime, timezone
+
+try:
+    from dotenv import load_dotenv
+except Exception:
+    load_dotenv = None
+
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../task_manager/src')))
 from task_module.topology_map import TopologicalMap
 from task_module.domain_catalog import (
@@ -8,6 +23,7 @@ from task_module.domain_catalog import (
     ACTION_EXECUTION_TIME_SEC,
     LOCATION_DISTANCE_EDGES_M,
     OBJECT_CATALOG,
+    OPERABLE_LOCATIONS,
     get_object_risk_coef,
 )
 
@@ -26,7 +42,91 @@ for action_item in ACTION_CATALOG:
         ACTION_DURATION[action_name] = ACTION_EXECUTION_TIME_SEC[action_id]
 
 DEFAULT_ACTION_DURATION = ACTION_DURATION.get("WAIT", 60)
-TRAY_SUPPORTED_OBJECTS = {"cup", "cola", "juice", "water", "tea"}
+FREE_HAND_REQUIRED_ACTIONS = {"WATER_DISPENSER", "OPEN_CABINET", "CLOSE_CABINET"}
+SCHEDULER_HELPER_ACTIONS = {"HANDOVER", "STORE_ON_TRAY", "RETRIEVE_FROM_TRAY"}
+
+
+def _format_operable_locations_table():
+    header = ["| ID | Chinese | English |", "|----|---------|---------|"]
+    rows = [
+        f"| {loc['location_id']:>2} | {loc.get('zh_name', '')} | {loc.get('location_name', '')} |"
+        for loc in OPERABLE_LOCATIONS
+    ]
+    return "\n".join(header + rows)
+
+
+def _format_action_lines_for_scan_llm():
+    lines = []
+    for action in ACTION_CATALOG:
+        signature = str(action.get("signature", "")).strip()
+        action_name = signature.split("(", 1)[0].strip().upper()
+        if action_name in SCHEDULER_HELPER_ACTIONS:
+            continue
+        lines.append(f"{action['id']}. `{signature}`: {action.get('description', '')}")
+    return "\n".join(lines)
+
+
+def _format_object_lines_for_scan_llm():
+    return "\n".join(
+        [
+            f"- `{obj.get('zh_name', '')}` / `{obj.get('object_name', '')}` "
+            f"(default location_id={obj.get('location_id')})"
+            for obj in OBJECT_CATALOG
+        ]
+    )
+
+
+def _build_scan_followup_system_prompt():
+    operable_location_ids = [loc["location_id"] for loc in OPERABLE_LOCATIONS]
+    min_location_id = min(operable_location_ids)
+    max_location_id = max(operable_location_ids)
+
+    return f"""
+You are a runtime scan replan generator for a dual-arm robot scheduler simulation.
+
+You will receive:
+1) Scan task metadata
+2) The visible object list from SCAN_TABLE_OBJECTS (`visible_objects`)
+3) Original task description/instruction text
+
+Your output must ONLY contain follow-up subtasks after scan, not the scan step itself.
+
+Rules:
+- Do NOT generate MOVE_TO.
+- Respect visible_objects and instruction intent. Do not invent unrelated branches.
+- Use canonical object names from the object catalog.
+- Do NOT generate scheduler helper actions: HANDOVER, STORE_ON_TRAY, RETRIEVE_FROM_TRAY.
+- location_id must be an integer in [{min_location_id}, {max_location_id}].
+- Dependencies use local step ids among follow-ups (for example step 3 depends on [1,2]).
+- Keep `hand_used = null` unless strict action rule requires hand.
+
+Action Catalog:
+{_format_action_lines_for_scan_llm()}
+
+Operable Locations:
+{_format_operable_locations_table()}
+
+Object Catalog:
+{_format_object_lines_for_scan_llm()}
+
+Output JSON format:
+{{
+  "subtasks": [
+    {{
+      "step_id": 1,
+      "action_type": "PICK",
+      "target_object": "remote_control",
+      "location_id": 3,
+      "hand_used": null,
+      "dependencies": [],
+      "description": "..."
+    }}
+  ]
+}}
+"""
+
+
+SCAN_FOLLOWUP_SYSTEM_PROMPT = _build_scan_followup_system_prompt()
 
 class TaskScheduler:
     _SCAN_CUP_NAMES = {"cup", "green_cup", "water_cup", "drink_cup"}
@@ -42,12 +142,46 @@ class TaskScheduler:
         self.w3 = float(w3)
         self.w4 = float(w4)
         self.valid_location_ids = set(getattr(_topo, "locations", {}).keys())
+        self.scan_llm_model = os.getenv("SCAN_FOLLOWUP_LLM_MODEL", "gpt-4o")
+        self.scan_followup_cache = {}
+        self.scan_llm_client = self._init_scan_llm_client()
+        self.scan_followup_dump_path = os.getenv(
+            "SCAN_FOLLOWUP_TASKS_JSON_PATH",
+            os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "..",
+                    "task_manager",
+                    "scan_followup_tasks.json",
+                )
+            ),
+        )
+        self._scan_followup_dump_lock = threading.Lock()
 
         # 距離圖 (雙向)；與時間圖分離，供 fitness 的 distance / risk 項使用。
         self.distance_graph = {}
         for src_id, dst_id, dist_m in LOCATION_DISTANCE_EDGES_M:
             self.distance_graph.setdefault(src_id, {})[dst_id] = float(dist_m)
             self.distance_graph.setdefault(dst_id, {})[src_id] = float(dist_m)
+
+    @staticmethod
+    def _init_scan_llm_client():
+        if OpenAI is None:
+            return None
+        candidate_env_paths = [
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env")),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "task_manager", ".env")),
+        ]
+        for env_path in candidate_env_paths:
+            if os.path.isfile(env_path) and load_dotenv is not None:
+                load_dotenv(dotenv_path=env_path)
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return None
+        return OpenAI(api_key=api_key)
 
     @staticmethod
     def _build_initial_object_locations():
@@ -72,75 +206,200 @@ class TaskScheduler:
         visible.sort()
         return visible
 
-    def _build_scan_followup_tasks(self, scan_task_id, scan_task, scan_location_id, visible_objects):
-        """Build deterministic simulation follow-up tasks after SCAN_TABLE_OBJECTS.
-
-        For simulation-only optimization, we branch by visible cup objects and inject
-        the rest of the workflow without waiting for runtime perception.
-        """
-        instruction_text = str(scan_task.get("post_scan_instruction", "") or "").strip()
-        if not instruction_text:
-            return []
-
-        if not bool(scan_task.get("runtime_replan_enabled", False)):
-            return []
-
-        lowered = instruction_text.lower()
-        if "杯" not in instruction_text and "cup" not in lowered:
+    def _normalize_scan_followup_tasks(self, scan_task_id, scan_task, raw_subtasks):
+        if not isinstance(raw_subtasks, list):
             return []
 
         parent_id = scan_task.get("parent_id")
         urgency_level = scan_task.get("urgency_level", "normal")
         urgency_score = scan_task.get("urgency_score", 0)
-        visible_set = {str(name).strip().lower() for name in (visible_objects or [])}
-        found_cup_names = sorted(list(visible_set.intersection(self._SCAN_CUP_NAMES)))
 
-        def make_task(seq_no, action_type, target_object, location_id, dep_ids, description):
-            return {
-                "global_id": f"{scan_task_id}__sim_{seq_no}",
-                "parent_id": parent_id,
-                "action_type": action_type,
-                "target_object": target_object,
-                "location_id": int(location_id),
-                "hand_used": None,
-                "dependencies": list(dep_ids),
-                "description": description,
-                "urgency_level": urgency_level,
-                "urgency_score": urgency_score,
+        cleaned = []
+        for idx, sub in enumerate(raw_subtasks, start=1):
+            if not isinstance(sub, dict):
+                continue
+
+            action_type = str(sub.get("action_type", "")).strip().upper()
+            if not action_type or action_type in SCHEDULER_HELPER_ACTIONS or action_type == "MOVE_TO":
+                continue
+
+            try:
+                local_step = int(sub.get("step_id", idx))
+            except Exception:
+                local_step = idx
+
+            location_id = self._sanitize_location_id(sub.get("location_id", scan_task.get("location_id", 1)), scan_task.get("location_id", 1))
+            target_object = sub.get("target_object")
+            deps = list(sub.get("dependencies", []) or [])
+            hand_used = self._normalize_hand(sub.get("hand_used"))
+
+            cleaned.append(
+                {
+                    "_local_step": local_step,
+                    "_raw_dependencies": deps,
+                    "action_type": action_type,
+                    "target_object": target_object,
+                    "location_id": int(location_id),
+                    "hand_used": hand_used,
+                    "description": str(sub.get("description", "")).strip() or "[SIM] LLM-generated scan follow-up.",
+                    "estimated_duration": int(ACTION_DURATION.get(action_type, DEFAULT_ACTION_DURATION)),
+                    "urgency_level": urgency_level,
+                    "urgency_score": urgency_score,
+                    "parent_id": parent_id,
+                }
+            )
+
+        if not cleaned:
+            return []
+
+        cleaned.sort(key=lambda item: item["_local_step"])
+        local_to_global = {}
+        for idx, item in enumerate(cleaned, start=1):
+            item["global_id"] = f"{scan_task_id}__sim_{idx}"
+            local_to_global[item["_local_step"]] = item["global_id"]
+
+        for item in cleaned:
+            mapped_deps = []
+            for dep in item.get("_raw_dependencies", []):
+                if isinstance(dep, str) and dep == scan_task_id:
+                    mapped_deps.append(scan_task_id)
+                    continue
+                try:
+                    dep_local = int(dep)
+                except Exception:
+                    continue
+                dep_global = local_to_global.get(dep_local)
+                if dep_global:
+                    mapped_deps.append(dep_global)
+
+            if not mapped_deps:
+                mapped_deps = [scan_task_id]
+            elif scan_task_id not in mapped_deps:
+                mapped_deps.append(scan_task_id)
+
+            item["dependencies"] = mapped_deps
+            item.pop("_local_step", None)
+            item.pop("_raw_dependencies", None)
+
+        return cleaned
+
+    def _append_scan_followup_dump(self, payload):
+        """Persist scan-followup generation details to a JSON file for debugging."""
+        if not self.scan_followup_dump_path:
+            return
+
+        try:
+            log_dir = os.path.dirname(self.scan_followup_dump_path)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+
+            with self._scan_followup_dump_lock:
+                existing = []
+                if os.path.isfile(self.scan_followup_dump_path):
+                    try:
+                        with open(self.scan_followup_dump_path, "r", encoding="utf-8") as f:
+                            loaded = json.load(f)
+                        if isinstance(loaded, list):
+                            existing = loaded
+                    except Exception:
+                        existing = []
+
+                existing.append(payload)
+                with open(self.scan_followup_dump_path, "w", encoding="utf-8") as f:
+                    json.dump(existing, f, ensure_ascii=False, indent=2)
+        except Exception:
+            # Debug log writing should never break planning flow.
+            return
+
+    def _build_scan_followup_tasks(self, scan_task_id, scan_task, scan_location_id, visible_objects, object_locations):
+        """Generate simulation follow-up tasks with LLM based on scan result + task text."""
+        if not bool(scan_task.get("runtime_replan_enabled", False)):
+            return []
+
+        instruction_text = str(scan_task.get("post_scan_instruction", "") or "").strip()
+        description_text = str(scan_task.get("description", "") or "").strip()
+        merged_intent = "\n".join([part for part in [instruction_text, description_text] if part]).strip()
+        if not merged_intent:
+            return []
+
+        visible_list = sorted({str(obj).strip().lower() for obj in (visible_objects or []) if str(obj).strip()})
+        cache_key = (
+            scan_task_id,
+            int(scan_location_id),
+            merged_intent,
+            tuple(visible_list),
+        )
+        if cache_key in self.scan_followup_cache:
+            return copy.deepcopy(self.scan_followup_cache[cache_key])
+
+        if self.scan_llm_client is None:
+            return []
+
+        scan_payload = {
+            "scan_task_id": scan_task_id,
+            "scan_location_id": int(scan_location_id),
+            "parent_id": scan_task.get("parent_id"),
+            "urgency_level": scan_task.get("urgency_level", "normal"),
+            "urgency_score": scan_task.get("urgency_score", 0),
+            "task_description": description_text,
+            "post_scan_instruction": instruction_text,
+            "visible_objects": visible_list,
+            "object_locations_at_sim": {
+                name: int(loc)
+                for name, loc in (object_locations or {}).items()
+            },
+        }
+
+        try:
+            response = self.scan_llm_client.chat.completions.create(
+                model=self.scan_llm_model,
+                messages=[
+                    {"role": "system", "content": SCAN_FOLLOWUP_SYSTEM_PROMPT},
+                    {"role": "user", "content": json.dumps(scan_payload, ensure_ascii=False)},
+                ],
+                temperature=0.0,
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content
+            parsed = json.loads(content)
+        except Exception as exc:
+            self._append_scan_followup_dump(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "scan_task_id": scan_task_id,
+                    "scan_location_id": int(scan_location_id),
+                    "visible_objects": visible_list,
+                    "task_description": description_text,
+                    "post_scan_instruction": instruction_text,
+                    "llm_raw_subtasks": [],
+                    "normalized_subtasks": [],
+                    "error": str(exc),
+                }
+            )
+            return []
+
+        normalized = self._normalize_scan_followup_tasks(
+            scan_task_id=scan_task_id,
+            scan_task=scan_task,
+            raw_subtasks=parsed.get("subtasks", []),
+        )
+
+        self._append_scan_followup_dump(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "scan_task_id": scan_task_id,
+                "scan_location_id": int(scan_location_id),
+                "visible_objects": visible_list,
+                "task_description": description_text,
+                "post_scan_instruction": instruction_text,
+                "llm_raw_subtasks": parsed.get("subtasks", []),
+                "normalized_subtasks": normalized,
+                "error": None,
             }
+        )
 
-        followups = []
-        dep = [scan_task_id]
-        seq_no = 1
-
-        if found_cup_names:
-            cup_name = found_cup_names[0]
-            plan = [
-                ("PICK", "milk", 7, f"[SIM] Scan found {cup_name}; pick milk from fridge."),
-                ("PICK", cup_name, scan_location_id, f"[SIM] Pick {cup_name} from scan location."),
-                ("POUR", f"milk -> {cup_name}", scan_location_id, f"[SIM] Pour milk into {cup_name}."),
-                ("PLACE", cup_name, scan_location_id, f"[SIM] Place {cup_name} back at scan location."),
-                ("PLACE", "milk", 7, "[SIM] Return milk to fridge."),
-            ]
-        else:
-            cup_name = "cup"
-            plan = [
-                ("PICK", cup_name, 10, "[SIM] Scan found no cup; pick cup from cabinet location."),
-                ("PLACE", cup_name, scan_location_id, "[SIM] Place cup to scan location."),
-                ("PICK", "milk", 7, "[SIM] Pick milk from fridge."),
-                ("PICK", cup_name, scan_location_id, "[SIM] Pick cup for pouring."),
-                ("POUR", f"milk -> {cup_name}", scan_location_id, "[SIM] Pour milk into cup."),
-                ("PLACE", cup_name, scan_location_id, "[SIM] Place cup back at scan location."),
-                ("PLACE", "milk", 7, "[SIM] Return milk to fridge."),
-            ]
-
-        for action_type, target_object, location_id, description in plan:
-            task = make_task(seq_no, action_type, target_object, location_id, dep, description)
-            followups.append(task)
-            dep = [task["global_id"]]
-            seq_no += 1
-
-        return followups
+        self.scan_followup_cache[cache_key] = copy.deepcopy(normalized)
+        return normalized
 
     def calculate_makespan(self, sequence):
         """
@@ -256,6 +515,10 @@ class TaskScheduler:
             return None
         candidates.sort(key=lambda item: (item[0], item[1]))
         return candidates[-1][1]
+
+    def _choose_storeable_hand_to_tray(self, hand_holding, resource_clock):
+        """Tray accepts any object; pick one occupied hand to free up."""
+        return self._choose_hand_to_store(hand_holding, resource_clock)
 
     def _sanitize_location_id(self, location_id, fallback_location_id):
         """Return a valid location id; fallback to current location when invalid."""
@@ -445,6 +708,7 @@ class TaskScheduler:
                         task,
                         task_location_id,
                         visible_objects,
+                        object_locations,
                     )
                     if followups:
                         inserted_ids = []
@@ -458,6 +722,37 @@ class TaskScheduler:
 
                 expanded_scan_tasks.add(task_id)
                 continue
+
+            if action in FREE_HAND_REQUIRED_ACTIONS:
+                if hand_holding.get("Left_Arm") is not None and hand_holding.get("Right_Arm") is not None:
+                    if len(tray_contents) >= self.tray_capacity:
+                        return planned_tasks, float("inf")
+
+                    hand_to_store = self._choose_storeable_hand_to_tray(hand_holding, resource_clock)
+                    if hand_to_store is None:
+                        return planned_tasks, float("inf")
+
+                    stored_obj = hand_holding.get(hand_to_store)
+                    insert_seq += 1
+                    store_task_payload = {
+                        "global_id": f"{task_id}_store_{insert_seq}",
+                        "parent_id": task.get("parent_id"),
+                    }
+                    end_time = schedule_action(
+                        store_task_payload,
+                        "STORE_ON_TRAY",
+                        hand_to_store,
+                        task_location_id,
+                        stored_obj,
+                        start_time_by_deps,
+                        travel_risk_coef=_current_carry_risk_coef(hand_holding, tray_contents),
+                        is_synthetic=True,
+                    )
+                    tray_contents.append(stored_obj)
+                    hand_holding[hand_to_store] = None
+                    if stored_obj:
+                        object_locations[stored_obj] = 0
+                    task_finish_times[store_task_payload["global_id"]] = end_time
 
             if not self._action_requires_hand(action):
                 end_time = schedule_action(task, action, None, task_location_id, target_object, start_time_by_deps, travel_risk_coef=base_move_risk)
@@ -510,13 +805,11 @@ class TaskScheduler:
                     if len(tray_contents) >= self.tray_capacity:
                         return planned_tasks, float("inf")
 
-                    hand_to_store = self._choose_hand_to_store(hand_holding, resource_clock)
+                    hand_to_store = self._choose_storeable_hand_to_tray(hand_holding, resource_clock)
                     if hand_to_store is None:
                         return planned_tasks, float("inf")
 
                     stored_obj = hand_holding.get(hand_to_store)
-                    if stored_obj and stored_obj not in TRAY_SUPPORTED_OBJECTS:
-                        return planned_tasks, float("inf")
                     insert_seq += 1
                     store_task_payload = {
                         "global_id": f"{task_id}_store_{insert_seq}",
@@ -544,10 +837,15 @@ class TaskScheduler:
                     return planned_tasks, float("inf")
                 picked_obj = self._parse_object_name(target_object) or "HOLDING_SOMETHING"
 
-                # Simulation object-state check: if object has known location, PICK must happen there.
+                # Simulation policy for scheduling-efficiency evaluation:
+                # If default location and task location differ, trust the task location
+                # for this run and sync object state to that location before PICK.
+                # This avoids false infeasible plans caused by stale defaults.
                 known_loc = object_locations.get(picked_obj)
-                if known_loc is not None and int(known_loc) != int(task_location_id):
-                    return planned_tasks, float("inf")
+                if known_loc is None:
+                    object_locations[picked_obj] = int(task_location_id)
+                elif int(known_loc) not in (0, int(task_location_id)):
+                    object_locations[picked_obj] = int(task_location_id)
 
                 end_time = schedule_action(task, action, chosen_hand, task_location_id, target_object, start_time_by_deps, travel_risk_coef=base_move_risk)
                 hand_holding[chosen_hand] = picked_obj
@@ -608,8 +906,6 @@ class TaskScheduler:
                     return planned_tasks, float("inf")
 
                 obj_name = self._parse_object_name(target_object)
-                if obj_name and obj_name not in TRAY_SUPPORTED_OBJECTS:
-                    return planned_tasks, float("inf")
                 if chosen_hand is None and obj_name:
                     for hand_name, holding_obj in hand_holding.items():
                         if holding_obj == obj_name:
@@ -680,9 +976,6 @@ class TaskScheduler:
                         return planned_tasks, float("inf")
 
                     stored_obj = hand_holding.get("Left_Arm")
-                    if stored_obj and stored_obj not in TRAY_SUPPORTED_OBJECTS:
-                        return planned_tasks, float("inf")
-
                     insert_seq += 1
                     store_task_payload = {
                         "global_id": f"{task_id}_store_{insert_seq}",

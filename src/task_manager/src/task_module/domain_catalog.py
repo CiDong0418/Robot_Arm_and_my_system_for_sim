@@ -268,7 +268,7 @@ OBJECT_CATALOG = [
     {"zh_name": "檸檬", "object_name": "lemon", "location_name": "fridge", "location_id": 7},
     {"zh_name": "衛生紙", "object_name": "tissue_box", "location_name": "tv_cabinet", "location_id": 1},
     {"zh_name": "濕紙巾", "object_name": "wet_wipe", "location_name": "hallway_storage_cabinet", "location_id": 19},
-    {"zh_name": "遙控器", "object_name": "remote_control", "location_name": "tv_cabinet", "location_id": 1},
+    {"zh_name": "遙控器", "object_name": "remote_control", "location_name": "tv_cabinet", "location_id": 2},
     {"zh_name": "藥罐", "object_name": "medicine_jar", "location_name": "master_bedside_table", "location_id": 11},
     {"zh_name": "牛奶", "object_name": "milk", "location_name": "fridge", "location_id": 7},
     {"zh_name": "原子筆", "object_name": "pen", "location_name": "master_desk", "location_id": 13},

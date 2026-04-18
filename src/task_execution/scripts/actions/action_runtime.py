@@ -34,7 +34,7 @@ def get_action_runtime():
 
         _ensure_software_root_in_sys_path()
 
-        try:
+        try:   
             from actionCommand import PostureCommandPublisher
             from camera_transfer import CameraTransfer
         except Exception as error:
