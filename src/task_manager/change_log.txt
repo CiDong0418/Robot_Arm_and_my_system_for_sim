@@ -1,0 +1,166 @@
+Change Log
+==========
+
+Update Time: 2026-04-18
+
+[1] File: src/dabc_optimizer/scripts/scheduler_node.py
+- Added terminal output tee logging so rosrun output is written to:
+  src/task_manager/scheduler_terminal_output.txt
+- Added ROS params for DABC configuration:
+  - population_size (default 20)
+  - max_iterations (default 100)
+  - limit (default 25)
+- Added optimizer diagnostics logging into scheduler log payload.
+- Added cross-run rescheduling hand reset for pulled unexecuted tasks:
+  - task['hand_used'] = None
+  - task['hand'] = None
+  This forces hand assignment to be recalculated in the new run.
+
+[2] File: src/dabc_optimizer/src/dabc_optimizer/fitness.py
+- Added SCAN follow-up dump mechanism to JSON file:
+  - Default path: src/task_manager/scan_followup_tasks.json
+  - Env override: SCAN_FOLLOWUP_TASKS_JSON_PATH
+- For each SCAN-generated LLM follow-up, dump includes:
+  - scan_task_id, visible_objects, task text,
+  - llm_raw_subtasks, normalized_subtasks, error
+- Removed tray object-type restriction (tray now accepts any object type).
+- Kept tray capacity rule unchanged.
+
+[3] File: src/dabc_optimizer/src/dabc_optimizer/dabc.py
+- Strengthened DABC diagnostics:
+  - neighbor_calls, accepted, rejected_infeasible, rejected_not_better
+  - per-operator stats
+  - repair_retry_success, repair_retry_fail
+  - best_parent_interleaving_ratio
+- Added mutation-post-repair retry mechanism:
+  - max_repair_attempts = 6
+  - If mutated solution is infeasible (fitness=inf), retry repaired variants before final reject.
+- Strengthened hand-state feasibility modeling in repair/generation:
+  - Added aggregate held count tracking: _held_count
+  - Handles hand_used=None tasks more safely for PICK/PLACE/FREE_HAND_REQUIRED_ACTIONS
+  - Applied to both:
+    - _repair_topological_order(...)
+    - _generate_topological_individual(...)
+
+[4] Validation
+- Syntax checks passed:
+  - python3 -m py_compile src/dabc_optimizer/scripts/scheduler_node.py
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/dabc.py
+
+Notes
+- Last runtime test attempt returned "No tasks in buffer!", so improvement metrics require a fresh run after task buffer refill.
+- Next updates will be appended to this same file.
+
+Update Time: 2026-04-18 (Git Upload)
+
+[5] GitHub Upload
+- Staged Python files under repository using pathspec `*.py`.
+- Commit created on branch `main`:
+  - commit: 8906ed6
+  - message: Update Python modules for scheduler, fitness, and DABC improvements
+- Pushed to remote:
+  - remote: sim
+  - branch: main
+
+Update Time: 2026-04-18 (M-DABC Documentation)
+
+[6] New documentation file
+- Created a new detailed implementation record focused on task generation, scheduling flow,
+  M-DABC practice, and differences from traditional DABC:
+  - src/task_manager/M_DABC_implementation_record.txt
+
+Update Time: 2026-04-18 (DABC Feasible-First + Adaptive Operators)
+
+[7] File: src/dabc_optimizer/src/dabc_optimizer/dabc.py
+- Added iteration timing logs every 10 iterations (shown in terminal output and diagnostics):
+  - time_10iter
+  - time_total
+- Added feasible-first neighborhood prefilter:
+  - Fast dependency/hand feasibility check before expensive fitness scoring.
+  - If prefilter fails, try one repair-first pass; if still invalid, reject as infeasible early.
+  - Added counter: prefilter_rejected.
+- Added adaptive mutation operator probabilities:
+  - Operators now selected by dynamic weights (swap/insert/segment_shuffle/parent_segment_exchange).
+  - Weights are adjusted periodically from recent accepted ratio (operator recent window).
+- Added parent-aware mutation operator:
+  - parent_segment_exchange: swaps segments from different parent runs to optimize interleaving directly.
+- Added two-stage objective logic:
+  - phase1_feasibility: prioritize reducing infeasible candidates.
+  - phase2_makespan: prioritize minimizing fitness/makespan after infeasible rate is reduced.
+  - Phase switching is based on iteration range and recent infeasible ratio.
+- Added elite diversity maintenance:
+  - Keep multiple elite solutions by distinct parent interleaving signatures.
+  - Diversification can re-seed from archive elites to reduce premature convergence.
+
+[8] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/dabc.py
+
+Update Time: 2026-04-18 (Release-Option Cost Evaluation)
+
+[9] File: src/dabc_optimizer/src/dabc_optimizer/fitness.py
+- Replaced hardcoded tray-full fallback behavior with cost-based candidate evaluation.
+- New behavior when hands are full and a hand must be released:
+  - Build multiple candidate release options:
+    - store_on_tray
+    - deliver_to_target (direct PLACE to known future target location)
+  - Estimate completion time for each candidate and choose the earliest-finishing option.
+- Applied this candidate-selection flow to:
+  - FREE_HAND_REQUIRED_ACTIONS deadlock handling
+  - PICK no-available-hand handling
+- This removes fixed-priority rule bias and lets the simulator pick the faster release path by time.
+
+[10] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/fitness.py
+
+Update Time: 2026-04-20 (Softmax Release Option Sampling)
+
+[11] File: src/dabc_optimizer/src/dabc_optimizer/fitness.py
+- Added softmax sampling for hand-release candidate selection.
+- Release options are still cost-aware (`est_end`), but selection is now probabilistic:
+  - lower estimated completion time => higher probability
+  - not always deterministic argmin
+- This makes helper-action choice more exploratory and heuristic-search friendly.
+- Added environment controls:
+  - `RELEASE_OPTION_USE_SOFTMAX` (default `1`)
+  - `RELEASE_OPTION_SOFTMAX_TEMP` (default `25.0`)
+
+[12] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/fitness.py
+
+Update Time: 2026-04-20 (Stable Final Replay After Optimization)
+
+[13] File: src/dabc_optimizer/scripts/scheduler_node.py
+- Improved post-optimization execution-plan replay robustness.
+- Final replay flow is now:
+  - First run deterministic replay (`release_option_use_softmax = False`) to avoid random divergence from optimizer scoring.
+  - If deterministic replay is infeasible, retry stochastic replay for multiple attempts.
+- Added parameter:
+  - `~plan_replay_retries` (default `8`) to control retry count.
+- This reduces false-negative outcomes where DABC finds a finite best score but one replay attempt fails due to branch randomness.
+
+[14] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/scripts/scheduler_node.py
+
+Update Time: 2026-04-20 (Per-Generation Search Breadth Controls)
+
+[15] File: src/dabc_optimizer/src/dabc_optimizer/dabc.py
+- Added configurable per-generation exploration breadth:
+  - `neighbor_attempts_per_bee` (default in class: 1)
+  - `onlooker_multiplier` (default in class: 1.0)
+- Employed-bee phase now performs multiple neighborhood attempts per bee.
+- Onlooker-bee phase now scales its per-generation attempt budget by multiplier.
+- Exposed both settings in optimizer diagnostics.
+
+[16] File: src/dabc_optimizer/scripts/scheduler_node.py
+- Added ROS params and pass-through to DABC:
+  - `~neighbor_attempts_per_bee` (default `2`)
+  - `~onlooker_multiplier` (default `1.5`)
+- Startup log now prints these breadth parameters.
+
+[17] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/dabc.py src/dabc_optimizer/scripts/scheduler_node.py

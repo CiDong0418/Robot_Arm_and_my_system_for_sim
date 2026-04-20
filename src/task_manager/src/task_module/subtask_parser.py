@@ -161,11 +161,15 @@ Do NOT invent new object names, different casing, plural forms, spaces, or alter
 **Drawer/Cabinet Rules (CRITICAL):**
 - If user intent is "put/store/place object into cabinet/drawer", you MUST represent storage as opening that container.
 - Drawer storage format: `"<object> -> drawer"` with `OPEN_DRAWER`.
-- Cabinet storage/retrieval must include `OPEN_CABINET` before the item manipulation and `CLOSE_CABINET` when leaving.
+- Cabinet storage/retrieval must include `OPEN_CABINET` before the item manipulation.
+- `CLOSE_CABINET` can be generated as an optional cleanup step, but it MUST NOT block delivery flow.
+- Do NOT force every cabinet branch to close immediately after pick; scheduler may decide close timing.
 - Do NOT add an extra PLACE for the exact same drawer-storage action represented by `OPEN_DRAWER`.
 
 **Dependency Logic (CRITICAL):**
 - `PLACE` always depends on `PICK` of the same object.
+- `PLACE` MUST NOT depend on `CLOSE_CABINET`.
+- If both `PICK` and `CLOSE_CABINET` exist, `PLACE` should still depend on `PICK` only (plus other real prerequisites), not on cabinet close.
 - `POUR` depends on PICK of the source liquid AND PICK (or PLACE) of the target container.
 - `WIPE_SURFACE` depends on PICK of `cloth` or `wet_wipe` in the same hand.
 - If two actions are at different locations, they must be sequential.

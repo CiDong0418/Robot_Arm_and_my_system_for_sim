@@ -1,20 +1,37 @@
 import random
 import copy
 import math
+import time
 from collections import defaultdict
+from collections import deque
 from .fitness import TaskScheduler
 
 
 FREE_HAND_REQUIRED_ACTIONS = {"WATER_DISPENSER", "OPEN_CABINET", "CLOSE_CABINET"}
 
 class DABC:
-    def __init__(self, task_lookup, population_size=20, max_iterations=100, limit=20, initial_seq=None, w1=1.0, w2=1.0, w3=1.0, w4=1.0):
+    def __init__(
+        self,
+        task_lookup,
+        population_size=20,
+        max_iterations=100,
+        limit=20,
+        initial_seq=None,
+        w1=1.0,
+        w2=1.0,
+        w3=1.0,
+        w4=1.0,
+        neighbor_attempts_per_bee=1,
+        onlooker_multiplier=1.0,
+    ):
         
         self.task_ids = list(task_lookup.keys())
         self.scheduler = TaskScheduler(task_lookup, w1=w1, w2=w2, w3=w3, w4=w4)
         self.pop_size = population_size  # 族群大小
         self.max_iter = max_iterations 
         self.limit = limit  # 偵查蜂重複次數限制 如果一個解連續 limit 次沒變好，就放棄它
+        self.neighbor_attempts_per_bee = max(1, int(neighbor_attempts_per_bee))
+        self.onlooker_multiplier = max(1.0, float(onlooker_multiplier))
         
         
         self.population = [] # 存解
@@ -22,6 +39,22 @@ class DABC:
         self.trial_counters = [] # 存 沒有 進步次數
         self._last_mutation_operator = None
         self.max_repair_attempts = 6
+        self.current_iteration = 0
+        self._current_phase = "phase1_feasibility"
+        self.phase1_min_iters = max(10, int(self.max_iter * 0.15))
+        self.phase1_max_iters = max(self.phase1_min_iters, int(self.max_iter * 0.45))
+        self.phase1_exit_threshold = 0.2
+        self._recent_candidate_infeasible = deque(maxlen=300)
+        self._operator_names = ["swap", "insert", "segment_shuffle", "parent_segment_exchange"]
+        self._operator_weights = {
+            "swap": 0.32,
+            "insert": 0.32,
+            "segment_shuffle": 0.2,
+            "parent_segment_exchange": 0.16,
+        }
+        self._operator_recent = {op: deque(maxlen=200) for op in self._operator_names}
+        self.elite_archive_size = max(3, min(8, self.pop_size // 3))
+        self.elite_archive = []
         self._init_diagnostics()
 
         for i in range(self.pop_size):
@@ -51,12 +84,18 @@ class DABC:
         self.global_best_sol = None
         self.global_best_fit = float('inf')
         self._update_global_best()
+        self._update_elite_archive_from_population()
 
     def optimize(self):
         """執行完整版 DABC 迭代"""
         self._reset_iteration_diagnostics()
+        start_time = time.perf_counter()
+        last_log_time = start_time
         
         for iteration in range(self.max_iter):
+            self.current_iteration = iteration
+            self._current_phase = self._determine_phase(iteration)
+
             # 1. 雇工蜂階段 (Employed Bees Phase)
             self._employed_bees_phase()
             
@@ -72,14 +111,33 @@ class DABC:
             # 5. 週期性重新注入多樣解，降低困在局部最佳的風險
             if (iteration + 1) % 20 == 0:
                 self._diversify_population(replace_ratio=0.3)
+                self._update_elite_archive_from_population()
+
+            if (iteration + 1) % 10 == 0:
+                self._adapt_operator_weights()
             
             # 每訓練十次印出來一次
             if (iteration + 1) % 10 == 0:
+                now = time.perf_counter()
+                block_elapsed = now - last_log_time
+                total_elapsed = now - start_time
+                last_log_time = now
+                self._diag["iter_time_logs"].append({
+                    "iteration": iteration + 1,
+                    "elapsed_10_iters_sec": block_elapsed,
+                    "elapsed_total_sec": total_elapsed,
+                    "phase": self._current_phase,
+                })
+                recent_infeasible_rate = self._recent_infeasible_rate()
                 print(
                     f"Iter {iteration + 1}: Best Fitness = {self.global_best_fit} | "
                     f"accepted={self._diag['accepted']} "
                     f"rejected_infeasible={self._diag['rejected_infeasible']} "
-                    f"rejected_not_better={self._diag['rejected_not_better']}"
+                    f"rejected_not_better={self._diag['rejected_not_better']} "
+                    f"phase={self._current_phase} "
+                    f"infeasible_rate_recent={recent_infeasible_rate:.3f} "
+                    f"time_10iter={block_elapsed:.3f}s "
+                    f"time_total={total_elapsed:.3f}s"
                 )
 
         return self.global_best_sol, self.global_best_fit
@@ -90,9 +148,11 @@ class DABC:
             "accepted": 0,
             "rejected_infeasible": 0,
             "rejected_not_better": 0,
+            "prefilter_rejected": 0,
             "operator_stats": defaultdict(lambda: {"attempts": 0, "accepted": 0, "rejected_infeasible": 0, "rejected_not_better": 0}),
             "repair_retry_success": 0,
             "repair_retry_fail": 0,
+            "iter_time_logs": [],
         }
 
     def _reset_iteration_diagnostics(self):
@@ -135,16 +195,116 @@ class DABC:
             "accepted": int(self._diag["accepted"]),
             "rejected_infeasible": int(self._diag["rejected_infeasible"]),
             "rejected_not_better": int(self._diag["rejected_not_better"]),
+            "prefilter_rejected": int(self._diag["prefilter_rejected"]),
             "best_parent_interleaving_ratio": best_interleave,
             "repair_retry_success": int(self._diag["repair_retry_success"]),
             "repair_retry_fail": int(self._diag["repair_retry_fail"]),
+            "phase": self._current_phase,
+            "neighbor_attempts_per_bee": int(self.neighbor_attempts_per_bee),
+            "onlooker_multiplier": float(self.onlooker_multiplier),
+            "operator_weights": dict(self._operator_weights),
+            "elite_archive_size": len(self.elite_archive),
+            "iter_time_logs": list(self._diag["iter_time_logs"]),
             "operator_stats": op_stats,
         }
+
+    def _determine_phase(self, iteration):
+        if iteration < self.phase1_min_iters:
+            return "phase1_feasibility"
+        if iteration < self.phase1_max_iters and self._recent_infeasible_rate() > self.phase1_exit_threshold:
+            return "phase1_feasibility"
+        return "phase2_makespan"
+
+    def _recent_infeasible_rate(self):
+        if not self._recent_candidate_infeasible:
+            return 1.0
+        return float(sum(self._recent_candidate_infeasible)) / float(len(self._recent_candidate_infeasible))
+
+    def _objective_key(self, fit, violation_score):
+        if self._current_phase == "phase1_feasibility":
+            if fit == float('inf'):
+                return (1, int(violation_score))
+            return (0, float(fit))
+
+        if fit == float('inf'):
+            return (1, float('inf'))
+        return (0, float(fit))
+
+    def _compute_parent_signature(self, sequence, max_tokens=16):
+        compact = []
+        last = None
+        for tid in sequence:
+            parent = self._parent_of_task(tid)
+            if parent is None:
+                continue
+            if parent != last:
+                compact.append(parent)
+                last = parent
+            if len(compact) >= max_tokens:
+                break
+        return "|".join(compact)
+
+    def _upsert_elite(self, sol, fit):
+        if fit == float('inf'):
+            return
+        signature = self._compute_parent_signature(sol)
+        if not signature:
+            return
+        for i, entry in enumerate(self.elite_archive):
+            if entry["signature"] == signature:
+                if fit < entry["fit"]:
+                    self.elite_archive[i] = {
+                        "sol": copy.deepcopy(sol),
+                        "fit": fit,
+                        "signature": signature,
+                    }
+                return
+
+        self.elite_archive.append({
+            "sol": copy.deepcopy(sol),
+            "fit": fit,
+            "signature": signature,
+        })
+        self.elite_archive.sort(key=lambda x: x["fit"])
+
+        if len(self.elite_archive) > self.elite_archive_size:
+            self.elite_archive = self.elite_archive[:self.elite_archive_size]
+
+    def _update_elite_archive_from_population(self):
+        ranked = sorted(range(self.pop_size), key=lambda i: self.fitness_values[i])
+        for idx in ranked:
+            fit = self.fitness_values[idx]
+            if fit == float('inf'):
+                continue
+            self._upsert_elite(self.population[idx], fit)
+
+    def _adapt_operator_weights(self):
+        raw_scores = {}
+        for op in self._operator_names:
+            recent = self._operator_recent.get(op, deque())
+            attempts = len(recent)
+            accepted = sum(1 for x in recent if x)
+            ratio = (accepted + 1.0) / (attempts + 2.0)
+            # 給 parent-aware 算子一點探索偏好，避免早期被完全壓掉
+            if op == "parent_segment_exchange":
+                ratio *= 1.1
+            raw_scores[op] = ratio
+
+        total = sum(raw_scores.values()) or 1.0
+        floor = 0.08
+        adjusted = {}
+        for op in self._operator_names:
+            adjusted[op] = max(floor, raw_scores[op] / total)
+
+        adjusted_total = sum(adjusted.values()) or 1.0
+        for op in self._operator_names:
+            self._operator_weights[op] = adjusted[op] / adjusted_total
 
     def _employed_bees_phase(self):
         """雇工蜂：對每一個解進行鄰域搜尋"""
         for i in range(self.pop_size):
-            self._neighborhood_search(i)
+            for _ in range(self.neighbor_attempts_per_bee):
+                self._neighborhood_search(i)
 
     def _onlooker_bees_phase(self):
         """觀察蜂：根據適應度機率選擇解進行搜尋 (輪盤法)"""
@@ -168,8 +328,9 @@ class DABC:
              probabilities = [v / total_inv_fitness for v in inv_fitness]
 
         # 觀察蜂根據機率選擇並開發
-        # 為了保持族群大小一致，我們執行 pop_size 次選擇與嘗試
-        for _ in range(self.pop_size):
+        # 透過 multiplier 放大每代探索寬度，而不是只拉長代數。
+        onlooker_budget = max(self.pop_size, int(round(self.pop_size * self.onlooker_multiplier)))
+        for _ in range(onlooker_budget):
             # 輪盤選擇 (Roulette Wheel Selection)
             selected_index = self._roulette_wheel_selection(probabilities)
             self._neighborhood_search(selected_index)
@@ -215,16 +376,43 @@ class DABC:
         new_sol = self._mutate(current_sol)
         operator = self._last_mutation_operator or "unknown"
         self._diag["operator_stats"][operator]["attempts"] += 1
-        new_sol, new_fit = self._evaluate_with_repair_retry(new_sol)
+
+        pre_ok, pre_violation = self._quick_feasibility_check(new_sol)
+        if not pre_ok:
+            # feasible-first: 不通過快速依賴/手臂檢查就先修一次，不直接進昂貴評分
+            repaired = self._repair_topological_order(new_sol)
+            repaired_ok, repaired_violation = self._quick_feasibility_check(repaired)
+            if repaired_ok:
+                new_sol, new_fit = self._evaluate_with_repair_retry(repaired)
+                pre_violation = repaired_violation
+            else:
+                new_sol = repaired
+                new_fit = float('inf')
+                pre_violation = repaired_violation
+                self._diag["prefilter_rejected"] += 1
+        else:
+            new_sol, new_fit = self._evaluate_with_repair_retry(new_sol)
+
+        self._recent_candidate_infeasible.append(1 if new_fit == float('inf') else 0)
+
+        current_ok, current_violation = self._quick_feasibility_check(current_sol)
+        if current_fit != float('inf'):
+            current_violation = 0
+        elif current_ok:
+            current_violation = 1
+
+        current_key = self._objective_key(current_fit, current_violation)
+        new_key = self._objective_key(new_fit, pre_violation)
 
         # 貪婪選擇 (Greedy Selection)
         # 如果新解比較好 (fitness 較低)，就接受；否則 trial + 1
-        if new_fit < current_fit:
+        if new_key < current_key:
             self.population[index] = new_sol
             self.fitness_values[index] = new_fit
             self.trial_counters[index] = 0 # 進步了，計數器歸零
             self._diag["accepted"] += 1
             self._diag["operator_stats"][operator]["accepted"] += 1
+            self._operator_recent.setdefault(operator, deque(maxlen=200)).append(True)
         else:
             self.trial_counters[index] += 1 # 沒進步，計數器加一
             if new_fit == float('inf'):
@@ -233,6 +421,7 @@ class DABC:
             else:
                 self._diag["rejected_not_better"] += 1
                 self._diag["operator_stats"][operator]["rejected_not_better"] += 1
+            self._operator_recent.setdefault(operator, deque(maxlen=200)).append(False)
 
     def _mutate(self, solution):
         """
@@ -243,28 +432,78 @@ class DABC:
         n = len(new_sol)
         if n < 2: return new_sol
 
-        operator = random.random()
         idx1, idx2 = random.sample(range(n), 2)
+        operator = random.choices(self._operator_names, weights=[self._operator_weights[o] for o in self._operator_names], k=1)[0]
 
-        if operator < 0.4:
+        if operator == "swap":
             # 策略 A: Swap (交換)
             self._last_mutation_operator = "swap"
             new_sol[idx1], new_sol[idx2] = new_sol[idx2], new_sol[idx1]
-        elif operator < 0.8:
+        elif operator == "insert":
             # 策略 B: Insert (插入)
             self._last_mutation_operator = "insert"
             element = new_sol.pop(idx1)
             new_sol.insert(idx2, element)
-        else:
+        elif operator == "segment_shuffle":
             # 策略 C: 區段打亂
             self._last_mutation_operator = "segment_shuffle"
             l, r = sorted([idx1, idx2])
             segment = new_sol[l:r + 1]
             random.shuffle(segment)
             new_sol[l:r + 1] = segment
+        else:
+            self._last_mutation_operator = "parent_segment_exchange"
+            exchanged = self._parent_segment_exchange(new_sol)
+            if exchanged is not None:
+                new_sol = exchanged
+            else:
+                # parent-aware 不可用時回退到 swap，避免浪費一次鄰域搜尋
+                self._last_mutation_operator = "swap"
+                new_sol[idx1], new_sol[idx2] = new_sol[idx2], new_sol[idx1]
 
         # 重要：把突變結果修復成「依賴+手臂狀態可行」序列，提升可行解密度
         return self._repair_topological_order(new_sol)
+
+    def _parent_segment_exchange(self, sequence):
+        if len(sequence) < 4:
+            return None
+
+        runs = []
+        start = 0
+        while start < len(sequence):
+            parent = self._parent_of_task(sequence[start])
+            end = start + 1
+            while end < len(sequence) and self._parent_of_task(sequence[end]) == parent:
+                end += 1
+            if parent is not None and end > start:
+                runs.append((start, end, parent))
+            start = end
+
+        if len(runs) < 2:
+            return None
+
+        for _ in range(12):
+            run_a = random.choice(runs)
+            choices_b = [r for r in runs if r[2] != run_a[2] and not (r[0] < run_a[1] and run_a[0] < r[1])]
+            if not choices_b:
+                continue
+            run_b = random.choice(choices_b)
+
+            a_start, a_end, _ = run_a
+            b_start, b_end, _ = run_b
+            if a_start == b_start and a_end == b_end:
+                continue
+
+            if a_start < b_start:
+                seg_a = sequence[a_start:a_end]
+                seg_b = sequence[b_start:b_end]
+                return sequence[:a_start] + seg_b + sequence[a_end:b_start] + seg_a + sequence[b_end:]
+
+            seg_b = sequence[b_start:b_end]
+            seg_a = sequence[a_start:a_end]
+            return sequence[:b_start] + seg_a + sequence[b_end:a_start] + seg_b + sequence[a_end:]
+
+        return None
 
     def _roulette_wheel_selection(self, probabilities):
         """實作輪盤法選擇索引"""
@@ -282,15 +521,73 @@ class DABC:
             if self.fitness_values[i] < self.global_best_fit:
                 self.global_best_fit = self.fitness_values[i]
                 self.global_best_sol = copy.deepcopy(self.population[i])
+            self._upsert_elite(self.population[i], self.fitness_values[i])
 
     def _diversify_population(self, replace_ratio=0.3):
         replace_count = max(1, int(self.pop_size * float(replace_ratio)))
         ranked = sorted(range(self.pop_size), key=lambda i: self.fitness_values[i], reverse=True)
         for idx in ranked[:replace_count]:
-            new_sol = self._generate_topological_individual()
+            if self.elite_archive and random.random() < 0.6:
+                seed = copy.deepcopy(random.choice(self.elite_archive)["sol"])
+                new_sol = self._mutate(seed)
+            else:
+                new_sol = self._generate_topological_individual()
             self.population[idx] = new_sol
             self.fitness_values[idx] = self.scheduler.calculate_fitness(new_sol)
             self.trial_counters[idx] = 0
+            self._upsert_elite(self.population[idx], self.fitness_values[idx])
+
+    def _quick_feasibility_check(self, sequence):
+        built = set()
+        hand_full = {'Left_Arm': False, 'Right_Arm': False, '_held_count': 0}
+        violations = 0
+
+        for tid in sequence:
+            task = self.scheduler.tasks.get(tid)
+            if task is None:
+                violations += 1
+                continue
+
+            deps = task.get('dependencies', [])
+            if any(dep not in built for dep in deps):
+                violations += 1
+                continue
+
+            action = str(task.get('action_type', '')).upper()
+            hand = task.get('hand_used')
+
+            if action in ['PICK', 'RETRIEVE_FROM_TRAY']:
+                if hand in hand_full and hand_full.get(hand, False):
+                    violations += 1
+                    continue
+                if hand is None and hand_full.get('_held_count', 0) >= 2:
+                    violations += 1
+                    continue
+                if hand in hand_full:
+                    hand_full[hand] = True
+                if hand_full.get('_held_count', 0) < 2:
+                    hand_full['_held_count'] += 1
+
+            elif action in ['PLACE', 'STORE_ON_TRAY']:
+                if hand in hand_full and not hand_full.get(hand, False):
+                    violations += 1
+                    continue
+                if hand is None and hand_full.get('_held_count', 0) <= 0:
+                    violations += 1
+                    continue
+                if hand in hand_full:
+                    hand_full[hand] = False
+                if hand_full.get('_held_count', 0) > 0:
+                    hand_full['_held_count'] -= 1
+
+            elif action in FREE_HAND_REQUIRED_ACTIONS:
+                if hand_full.get('_held_count', 0) >= 2:
+                    violations += 1
+                    continue
+
+            built.add(tid)
+
+        return violations == 0, violations
 
     def _is_dependency_satisfied(self, task_id, built_seq):
         deps = self.scheduler.tasks[task_id].get('dependencies', [])

@@ -93,6 +93,8 @@ class SchedulerNode:
         self.population_size = int(rospy.get_param('~population_size', 20))
         self.max_iterations = int(rospy.get_param('~max_iterations', 100))
         self.limit = int(rospy.get_param('~limit', 25))
+        self.neighbor_attempts_per_bee = int(rospy.get_param('~neighbor_attempts_per_bee', 2))
+        self.onlooker_multiplier = float(rospy.get_param('~onlooker_multiplier', 1.5))
         
         # 1. 任務緩衝區 (Buffer)
         self.task_buffer = []      # 存原始 JSON 物件
@@ -118,7 +120,9 @@ class SchedulerNode:
         rospy.loginfo(f"📝 終端輸出將同步寫入: {self.terminal_log_path}")
         rospy.loginfo(
             f"[Scheduler] DABC params: population_size={self.population_size}, "
-            f"max_iterations={self.max_iterations}, limit={self.limit}"
+            f"max_iterations={self.max_iterations}, limit={self.limit}, "
+            f"neighbor_attempts_per_bee={self.neighbor_attempts_per_bee}, "
+            f"onlooker_multiplier={self.onlooker_multiplier}"
         )
 
     def _init_log(self):
@@ -283,6 +287,8 @@ class SchedulerNode:
             max_iterations=self.max_iterations,
             limit=self.limit,
             initial_seq=llm_initial_sequence,
+            neighbor_attempts_per_bee=self.neighbor_attempts_per_bee,
+            onlooker_multiplier=self.onlooker_multiplier,
         )
         
         # 2. 執行運算
@@ -298,7 +304,31 @@ class SchedulerNode:
             
         # 4. 根據最佳順序進行手臂配置與托盤插單
         planner = TaskScheduler(self.task_lookup)
+        # Final replay should be stable: use deterministic best-cost selection first.
+        planner.release_option_use_softmax = False
         optimized_tasks, plan_makespan = planner.build_execution_plan(best_seq)
+
+        # If deterministic replay fails, retry with stochastic replay to recover
+        # cases where alternative branches are feasible.
+        if plan_makespan == float('inf'):
+            replay_retries = int(rospy.get_param('~plan_replay_retries', 8))
+            best_retry_tasks = None
+            best_retry_makespan = float('inf')
+            for retry_idx in range(max(0, replay_retries)):
+                retry_planner = TaskScheduler(self.task_lookup)
+                retry_planner.release_option_use_softmax = True
+                # Different deterministic seed per retry for reproducible diversification.
+                retry_planner._release_option_rng.seed(10007 + retry_idx)
+                retry_tasks, retry_makespan = retry_planner.build_execution_plan(best_seq)
+                if retry_makespan < best_retry_makespan:
+                    best_retry_tasks = retry_tasks
+                    best_retry_makespan = retry_makespan
+                if retry_makespan != float('inf'):
+                    break
+
+            if best_retry_makespan != float('inf'):
+                optimized_tasks = best_retry_tasks
+                plan_makespan = best_retry_makespan
 
         if plan_makespan == float('inf'):
             msg = "Optimization Failed: No feasible plan after tray insertion."

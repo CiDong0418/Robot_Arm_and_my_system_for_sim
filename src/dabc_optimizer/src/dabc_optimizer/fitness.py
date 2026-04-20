@@ -4,6 +4,8 @@ import heapq
 import copy
 import json
 import threading
+import math
+import random
 from datetime import datetime, timezone
 
 try:
@@ -159,6 +161,15 @@ class TaskScheduler:
             ),
         )
         self._scan_followup_dump_lock = threading.Lock()
+
+        # Candidate selection policy for hand-release helpers.
+        # Softmax sampling keeps low-cost options more likely while preserving exploration.
+        self.release_option_use_softmax = str(os.getenv("RELEASE_OPTION_USE_SOFTMAX", "1")).strip().lower() not in {"0", "false", "no"}
+        try:
+            self.release_option_softmax_temp = max(1e-3, float(os.getenv("RELEASE_OPTION_SOFTMAX_TEMP", "25.0")))
+        except Exception:
+            self.release_option_softmax_temp = 25.0
+        self._release_option_rng = random.Random()
 
         # 距離圖 (雙向)；與時間圖分離，供 fitness 的 distance / risk 項使用。
         self.distance_graph = {}
@@ -663,6 +674,189 @@ class TaskScheduler:
 
             return end_time
 
+        def estimate_action_end(action_type, hand, location_id, min_start_time, secondary_hand=None):
+            """Estimate end time for a candidate helper action without mutating state."""
+            action_duration = ACTION_DURATION.get(action_type, DEFAULT_ACTION_DURATION)
+            travel_time = _topo.get_travel_time(current_location_id, location_id)
+
+            start_ready = max(min_start_time, resource_clock.get("Base", 0))
+            if hand in ("Left_Arm", "Right_Arm"):
+                start_ready = max(start_ready, resource_clock.get(hand, 0))
+            if secondary_hand in ("Left_Arm", "Right_Arm"):
+                start_ready = max(start_ready, resource_clock.get(secondary_hand, 0))
+
+            return start_ready + travel_time + action_duration
+
+        def find_future_place_candidate(obj_name):
+            """Find earliest queued PLACE task for the given object."""
+            if not obj_name:
+                return None
+            for q_idx, queued_id in enumerate(execution_queue):
+                queued_task = local_tasks.get(queued_id)
+                if not queued_task:
+                    continue
+                if str(queued_task.get("action_type", "")).upper() != "PLACE":
+                    continue
+                queued_obj = self._parse_object_name(queued_task.get("target_object"))
+                if queued_obj != obj_name:
+                    continue
+                queued_loc = self._sanitize_location_id(queued_task.get("location_id", current_location_id), current_location_id)
+                return (q_idx, queued_id, queued_loc)
+            return None
+
+        def choose_release_option(task_location_id, start_time_by_deps):
+            """Choose best hand-release action by estimated completion time.
+
+            Candidate types:
+            - store_on_tray: temporarily store held object on tray.
+            - deliver_to_target: directly place held object to its queued PLACE target.
+            """
+            options = []
+
+            for hand_name, held_obj in hand_holding.items():
+                if held_obj is None:
+                    continue
+
+                # Candidate A: store on tray (if tray has space).
+                if len(tray_contents) < self.tray_capacity:
+                    est_end = estimate_action_end(
+                        "STORE_ON_TRAY",
+                        hand_name,
+                        task_location_id,
+                        start_time_by_deps,
+                    )
+                    options.append({
+                        "type": "store_on_tray",
+                        "hand": hand_name,
+                        "obj": held_obj,
+                        "location": task_location_id,
+                        "est_end": est_end,
+                    })
+
+                # Candidate B: deliver to earliest queued target PLACE for same object.
+                place_candidate = find_future_place_candidate(held_obj)
+                if place_candidate:
+                    q_idx, queued_id, queued_loc = place_candidate
+                    est_end = estimate_action_end(
+                        "PLACE",
+                        hand_name,
+                        queued_loc,
+                        start_time_by_deps,
+                    )
+                    options.append({
+                        "type": "deliver_to_target",
+                        "hand": hand_name,
+                        "obj": held_obj,
+                        "location": queued_loc,
+                        "q_idx": q_idx,
+                        "queued_id": queued_id,
+                        "est_end": est_end,
+                    })
+
+            if not options:
+                return None
+
+            options.sort(key=lambda x: (x["est_end"], x["hand"]))
+            if not self.release_option_use_softmax or len(options) == 1:
+                return options[0]
+
+            min_end = options[0]["est_end"]
+            temp = max(1e-3, float(self.release_option_softmax_temp))
+
+            weights = []
+            for opt in options:
+                # Lower est_end -> higher probability, but not deterministic.
+                z = -((float(opt["est_end"]) - float(min_end)) / temp)
+                z = max(-60.0, min(60.0, z))
+                weights.append(math.exp(z))
+
+            weight_sum = sum(weights)
+            if weight_sum <= 0:
+                return options[0]
+
+            pick = self._release_option_rng.random() * weight_sum
+            acc = 0.0
+            for opt, w in zip(options, weights):
+                acc += w
+                if pick <= acc:
+                    return opt
+            return options[-1]
+
+        def apply_release_option(task_id, task, option, start_time_by_deps):
+            """Execute selected release option and update simulation state."""
+            nonlocal insert_seq
+
+            if not option:
+                return False
+
+            hand_name = option["hand"]
+            obj_name = option["obj"]
+
+            if option["type"] == "store_on_tray":
+                if len(tray_contents) >= self.tray_capacity:
+                    return False
+                if hand_holding.get(hand_name) is None:
+                    return False
+
+                insert_seq += 1
+                store_task_payload = {
+                    "global_id": f"{task_id}_store_{insert_seq}",
+                    "parent_id": task.get("parent_id"),
+                }
+                end_time = schedule_action(
+                    store_task_payload,
+                    "STORE_ON_TRAY",
+                    hand_name,
+                    option["location"],
+                    obj_name,
+                    start_time_by_deps,
+                    travel_risk_coef=_current_carry_risk_coef(hand_holding, tray_contents),
+                    is_synthetic=True,
+                )
+                tray_contents.append(obj_name)
+                hand_holding[hand_name] = None
+                if obj_name:
+                    object_locations[obj_name] = 0
+                task_finish_times[store_task_payload["global_id"]] = end_time
+                return True
+
+            if option["type"] == "deliver_to_target":
+                if hand_holding.get(hand_name) is None:
+                    return False
+
+                insert_seq += 1
+                deliver_payload = {
+                    "global_id": f"{task_id}_auto_place_{insert_seq}",
+                    "parent_id": task.get("parent_id"),
+                    "description": "Auto-inserted PLACE candidate selected by time-cost evaluation.",
+                }
+                end_time = schedule_action(
+                    deliver_payload,
+                    "PLACE",
+                    hand_name,
+                    option["location"],
+                    obj_name,
+                    start_time_by_deps,
+                    travel_risk_coef=_current_carry_risk_coef(hand_holding, tray_contents),
+                    is_synthetic=True,
+                )
+
+                hand_holding[hand_name] = None
+                if obj_name:
+                    object_locations[obj_name] = int(option["location"])
+                task_finish_times[deliver_payload["global_id"]] = end_time
+
+                q_idx = option.get("q_idx")
+                queued_id = option.get("queued_id")
+                # Mark matched queued PLACE as fulfilled.
+                if isinstance(q_idx, int) and queued_id:
+                    if 0 <= q_idx < len(execution_queue) and execution_queue[q_idx] == queued_id:
+                        execution_queue.pop(q_idx)
+                        task_finish_times[queued_id] = end_time
+                return True
+
+            return False
+
         local_tasks = dict(self.tasks)
         execution_queue = list(sequence)
         expanded_scan_tasks = set()
@@ -725,34 +919,13 @@ class TaskScheduler:
 
             if action in FREE_HAND_REQUIRED_ACTIONS:
                 if hand_holding.get("Left_Arm") is not None and hand_holding.get("Right_Arm") is not None:
-                    if len(tray_contents) >= self.tray_capacity:
+                    release_option = choose_release_option(task_location_id, start_time_by_deps)
+                    if not apply_release_option(task_id, task, release_option, start_time_by_deps):
                         return planned_tasks, float("inf")
+                    base_move_risk = _current_carry_risk_coef(hand_holding, tray_contents)
 
-                    hand_to_store = self._choose_storeable_hand_to_tray(hand_holding, resource_clock)
-                    if hand_to_store is None:
+                    if hand_holding.get("Left_Arm") is not None and hand_holding.get("Right_Arm") is not None:
                         return planned_tasks, float("inf")
-
-                    stored_obj = hand_holding.get(hand_to_store)
-                    insert_seq += 1
-                    store_task_payload = {
-                        "global_id": f"{task_id}_store_{insert_seq}",
-                        "parent_id": task.get("parent_id"),
-                    }
-                    end_time = schedule_action(
-                        store_task_payload,
-                        "STORE_ON_TRAY",
-                        hand_to_store,
-                        task_location_id,
-                        stored_obj,
-                        start_time_by_deps,
-                        travel_risk_coef=_current_carry_risk_coef(hand_holding, tray_contents),
-                        is_synthetic=True,
-                    )
-                    tray_contents.append(stored_obj)
-                    hand_holding[hand_to_store] = None
-                    if stored_obj:
-                        object_locations[stored_obj] = 0
-                    task_finish_times[store_task_payload["global_id"]] = end_time
 
             if not self._action_requires_hand(action):
                 end_time = schedule_action(task, action, None, task_location_id, target_object, start_time_by_deps, travel_risk_coef=base_move_risk)
@@ -802,32 +975,10 @@ class TaskScheduler:
                             return planned_tasks, float("inf")
 
                 if chosen_hand is None:
-                    if len(tray_contents) >= self.tray_capacity:
+                    release_option = choose_release_option(task_location_id, start_time_by_deps)
+                    if not apply_release_option(task_id, task, release_option, start_time_by_deps):
                         return planned_tasks, float("inf")
-
-                    hand_to_store = self._choose_storeable_hand_to_tray(hand_holding, resource_clock)
-                    if hand_to_store is None:
-                        return planned_tasks, float("inf")
-
-                    stored_obj = hand_holding.get(hand_to_store)
-                    insert_seq += 1
-                    store_task_payload = {
-                        "global_id": f"{task_id}_store_{insert_seq}",
-                        "parent_id": task.get("parent_id"),
-                    }
-                    end_time = schedule_action(
-                        store_task_payload,
-                        "STORE_ON_TRAY",
-                        hand_to_store,
-                        task_location_id,
-                        stored_obj,
-                        start_time_by_deps,
-                        travel_risk_coef=_current_carry_risk_coef(hand_holding, tray_contents),
-                        is_synthetic=True,
-                    )
-                    tray_contents.append(stored_obj)
-                    hand_holding[hand_to_store] = None
-                    task_finish_times[store_task_payload["global_id"]] = end_time
+                    base_move_risk = _current_carry_risk_coef(hand_holding, tray_contents)
 
                     chosen_hand = self._choose_available_hand(allowed_hands, hand_holding, resource_clock, start_time_by_deps)
                     if chosen_hand is None:
