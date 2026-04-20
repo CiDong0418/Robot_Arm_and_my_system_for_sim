@@ -95,6 +95,15 @@ class SchedulerNode:
         self.limit = int(rospy.get_param('~limit', 25))
         self.neighbor_attempts_per_bee = int(rospy.get_param('~neighbor_attempts_per_bee', 2))
         self.onlooker_multiplier = float(rospy.get_param('~onlooker_multiplier', 1.5))
+        self.dynamic_breadth_enabled = bool(rospy.get_param('~dynamic_breadth_enabled', True))
+        self.max_neighbor_attempts_per_bee = int(rospy.get_param('~max_neighbor_attempts_per_bee', 5))
+        self.max_onlooker_multiplier = float(rospy.get_param('~max_onlooker_multiplier', 3.0))
+        self.dynamic_onlooker_step = float(rospy.get_param('~dynamic_onlooker_step', 0.25))
+        self.dynamic_stagnation_window_blocks = int(rospy.get_param('~dynamic_stagnation_window_blocks', 2))
+        self.dynamic_improve_threshold_pct = float(rospy.get_param('~dynamic_improve_threshold_pct', 0.3))
+        self.dynamic_high_infeasible_threshold = float(rospy.get_param('~dynamic_high_infeasible_threshold', 0.78))
+        self.dynamic_recovery_improve_pct = float(rospy.get_param('~dynamic_recovery_improve_pct', 1.0))
+        self.dynamic_recovery_infeasible_threshold = float(rospy.get_param('~dynamic_recovery_infeasible_threshold', 0.60))
         
         # 1. 任務緩衝區 (Buffer)
         self.task_buffer = []      # 存原始 JSON 物件
@@ -122,7 +131,16 @@ class SchedulerNode:
             f"[Scheduler] DABC params: population_size={self.population_size}, "
             f"max_iterations={self.max_iterations}, limit={self.limit}, "
             f"neighbor_attempts_per_bee={self.neighbor_attempts_per_bee}, "
-            f"onlooker_multiplier={self.onlooker_multiplier}"
+            f"onlooker_multiplier={self.onlooker_multiplier}, "
+            f"dynamic_breadth_enabled={self.dynamic_breadth_enabled}, "
+            f"max_neighbor_attempts_per_bee={self.max_neighbor_attempts_per_bee}, "
+            f"max_onlooker_multiplier={self.max_onlooker_multiplier}, "
+            f"dynamic_onlooker_step={self.dynamic_onlooker_step}, "
+            f"dynamic_stagnation_window_blocks={self.dynamic_stagnation_window_blocks}, "
+            f"dynamic_improve_threshold_pct={self.dynamic_improve_threshold_pct}, "
+            f"dynamic_high_infeasible_threshold={self.dynamic_high_infeasible_threshold}, "
+            f"dynamic_recovery_improve_pct={self.dynamic_recovery_improve_pct}, "
+            f"dynamic_recovery_infeasible_threshold={self.dynamic_recovery_infeasible_threshold}"
         )
 
     def _init_log(self):
@@ -289,6 +307,15 @@ class SchedulerNode:
             initial_seq=llm_initial_sequence,
             neighbor_attempts_per_bee=self.neighbor_attempts_per_bee,
             onlooker_multiplier=self.onlooker_multiplier,
+            dynamic_breadth_enabled=self.dynamic_breadth_enabled,
+            max_neighbor_attempts_per_bee=self.max_neighbor_attempts_per_bee,
+            max_onlooker_multiplier=self.max_onlooker_multiplier,
+            dynamic_onlooker_step=self.dynamic_onlooker_step,
+            dynamic_stagnation_window_blocks=self.dynamic_stagnation_window_blocks,
+            dynamic_improve_threshold_pct=self.dynamic_improve_threshold_pct,
+            dynamic_high_infeasible_threshold=self.dynamic_high_infeasible_threshold,
+            dynamic_recovery_improve_pct=self.dynamic_recovery_improve_pct,
+            dynamic_recovery_infeasible_threshold=self.dynamic_recovery_infeasible_threshold,
         )
         
         # 2. 執行運算

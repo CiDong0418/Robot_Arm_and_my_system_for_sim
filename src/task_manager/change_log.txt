@@ -164,3 +164,34 @@ Update Time: 2026-04-20 (Per-Generation Search Breadth Controls)
 [17] Validation
 - Syntax check passed:
   - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/dabc.py src/dabc_optimizer/scripts/scheduler_node.py
+
+Update Time: 2026-04-20 (10-Iteration Improvement Metric + Dynamic Breadth Tuning)
+
+[18] File: src/dabc_optimizer/src/dabc_optimizer/dabc.py
+- Added 10-iteration improvement metric:
+  - `improve_pct_10iter` is computed and printed every 10 iterations.
+  - Logged into `iter_time_logs` for post-run analysis.
+- Added dynamic breadth auto-tuning:
+  - Expansion trigger: low `improve_pct_10iter` or high `infeasible_rate_recent` for consecutive blocks.
+  - Expansion actions: increase `neighbor_attempts_per_bee` and `onlooker_multiplier` up to configured caps.
+  - Recovery trigger: sustained good progress with lower infeasible rate.
+  - Recovery action: gradual contraction toward base breadth settings.
+- Added diagnostics outputs:
+  - `dynamic_breadth_config`, `dynamic_breadth_state`, `breadth_adjustments`.
+
+[19] File: src/dabc_optimizer/scripts/scheduler_node.py
+- Added ROS params for dynamic breadth tuning and pass-through into DABC:
+  - `~dynamic_breadth_enabled`
+  - `~max_neighbor_attempts_per_bee`
+  - `~max_onlooker_multiplier`
+  - `~dynamic_onlooker_step`
+  - `~dynamic_stagnation_window_blocks`
+  - `~dynamic_improve_threshold_pct`
+  - `~dynamic_high_infeasible_threshold`
+  - `~dynamic_recovery_improve_pct`
+  - `~dynamic_recovery_infeasible_threshold`
+- Startup log now prints these dynamic tuning parameters.
+
+[20] Validation
+- Syntax check passed:
+  - python3 -m py_compile src/dabc_optimizer/src/dabc_optimizer/dabc.py src/dabc_optimizer/scripts/scheduler_node.py

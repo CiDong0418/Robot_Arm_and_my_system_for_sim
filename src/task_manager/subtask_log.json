@@ -1,18 +1,18 @@
 [
   {
-    "timestamp": "2026-04-20 05:38:48",
+    "timestamp": "2026-04-20 08:47:04",
     "parent_task_id": 1,
-    "parent_task_name": "Move letter from entry shoe cabinet to coffee table",
+    "parent_task_name": "Fill and deliver drink cup",
     "subtasks": [
       {
         "step_id": 1,
-        "action_type": "OPEN_CABINET",
-        "target_object": "cabinet",
-        "location_id": 18,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
         "hand_used": null,
-        "estimated_duration": 110,
+        "estimated_duration": 55,
         "dependencies": [],
-        "description": "Open the entry shoe cabinet (location 18) to access the notebook.",
+        "description": "Pick up the drink cup from the bar counter (location 5).",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 1,
@@ -20,15 +20,15 @@
       },
       {
         "step_id": 2,
-        "action_type": "PICK",
-        "target_object": "notebook",
-        "location_id": 18,
-        "hand_used": null,
-        "estimated_duration": 55,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": "Right_Arm",
+        "estimated_duration": 115,
         "dependencies": [
           "1_1"
         ],
-        "description": "Pick up the notebook from the entry shoe cabinet (location 18).",
+        "description": "Fill the drink cup with water at the water dispenser (location 20).",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 1,
@@ -37,35 +37,51 @@
       {
         "step_id": 3,
         "action_type": "PLACE",
-        "target_object": "notebook",
-        "location_id": 2,
+        "target_object": "drink_cup",
+        "location_id": 14,
         "hand_used": null,
         "estimated_duration": 35,
         "dependencies": [
           "1_2"
         ],
-        "description": "Place the notebook on the coffee table (location 2).",
+        "description": "Deliver the filled drink cup to the guest bedside table (location 14).",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 1,
         "global_id": "1_3"
+      },
+      {
+        "step_id": 4,
+        "action_type": "WAIT",
+        "target_object": null,
+        "location_id": 14,
+        "hand_used": null,
+        "estimated_duration": 60,
+        "dependencies": [
+          "1_3"
+        ],
+        "description": "Wait for 5 seconds in the guest room after delivering the cup.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_4"
       }
     ]
   },
   {
-    "timestamp": "2026-04-20 05:38:49",
+    "timestamp": "2026-04-20 08:47:08",
     "parent_task_id": 2,
-    "parent_task_name": "Move mineral water from fridge to bar counter",
+    "parent_task_name": "Move cookie to coffee table",
     "subtasks": [
       {
         "step_id": 1,
-        "action_type": "PICK",
-        "target_object": "mineral_water",
-        "location_id": 7,
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 6,
         "hand_used": null,
-        "estimated_duration": 55,
+        "estimated_duration": 110,
         "dependencies": [],
-        "description": "Pick up the mineral water from the fridge (location 7).",
+        "description": "Open the snack cabinet to access the cookie.",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 2,
@@ -73,36 +89,52 @@
       },
       {
         "step_id": 2,
-        "action_type": "PLACE",
-        "target_object": "mineral_water",
-        "location_id": 5,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
         "hand_used": null,
-        "estimated_duration": 35,
+        "estimated_duration": 55,
         "dependencies": [
           "2_1"
         ],
-        "description": "Place the mineral water on the bar counter (location 5).",
+        "description": "Pick up the cookie from the snack cabinet.",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 2,
         "global_id": "2_2"
+      },
+      {
+        "step_id": 3,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 2,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "2_2"
+        ],
+        "description": "Place the cookie on the coffee table.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 2,
+        "global_id": "2_3"
       }
     ]
   },
   {
-    "timestamp": "2026-04-20 05:38:51",
+    "timestamp": "2026-04-20 08:47:11",
     "parent_task_id": 3,
-    "parent_task_name": "Move bowl from dining table to sink counter",
+    "parent_task_name": "Move cup from dining table to sink counter",
     "subtasks": [
       {
         "step_id": 1,
         "action_type": "PICK",
-        "target_object": "bowl",
+        "target_object": "cup",
         "location_id": 4,
         "hand_used": null,
         "estimated_duration": 55,
         "dependencies": [],
-        "description": "Pick up the bowl from the dining table (location 4).",
+        "description": "Pick up the cup from the dining table (location 4).",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 3,
@@ -111,14 +143,14 @@
       {
         "step_id": 2,
         "action_type": "PLACE",
-        "target_object": "bowl",
+        "target_object": "cup",
         "location_id": 8,
         "hand_used": null,
         "estimated_duration": 35,
         "dependencies": [
           "3_1"
         ],
-        "description": "Place the bowl on the sink counter (location 8).",
+        "description": "Place the cup on the sink counter (location 8).",
         "urgency_level": "normal",
         "urgency_score": 0,
         "parent_id": 3,
@@ -127,12 +159,384 @@
     ]
   },
   {
-    "timestamp": "2026-04-20 05:38:54",
+    "timestamp": "2026-04-20 08:47:13",
     "parent_task_id": 4,
+    "parent_task_name": "Scan coffee table for scissors",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "SCAN_TABLE_OBJECTS",
+        "target_object": null,
+        "location_id": 2,
+        "hand_used": null,
+        "estimated_duration": 20,
+        "dependencies": [],
+        "description": "Scan the coffee table for scissors. If found, proceed with subsequent tasks to handle the scissors.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_1",
+        "scan_capture_required": true,
+        "runtime_replan_enabled": true,
+        "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿到 dining_table 剪開從 snack_cabinet 拿來的 cookie box，然後將 scissors 放回 tv_cabinet 的 drawer 並關上；若沒看到 scissors，則不執行後續任務。"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:18",
+    "parent_task_id": 5,
+    "parent_task_name": "Collect tissue_box and notebook, deliver to master_desk",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "tissue_box",
+        "location_id": 19,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the tissue box from the hallway storage cabinet (location 19).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "notebook",
+        "location_id": 16,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the notebook from the study computer desk (location 16).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_2"
+      },
+      {
+        "step_id": 3,
+        "action_type": "PLACE",
+        "target_object": "tissue_box",
+        "location_id": 13,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "5_1"
+        ],
+        "description": "Deliver the tissue box to the master desk (location 13).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_3"
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "notebook",
+        "location_id": 13,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "5_2"
+        ],
+        "description": "Deliver the notebook to the master desk (location 13).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_4"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:20",
+    "parent_task_id": 6,
+    "parent_task_name": "Move juice to small round side table",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "juice",
+        "location_id": 7,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the juice from the fridge (location 7).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "juice",
+        "location_id": 3,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "6_1"
+        ],
+        "description": "Place the juice on the small round side table (location 3).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_2"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:23",
+    "parent_task_id": 7,
+    "parent_task_name": "Check for medicine jar and handle accordingly",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "SCAN_TABLE_OBJECTS",
+        "target_object": null,
+        "location_id": 14,
+        "hand_used": null,
+        "estimated_duration": 20,
+        "dependencies": [],
+        "description": "Scan for the presence of the medicine jar at the guest bedside table (location 14). If found, proceed to hand it to the elder and follow the described sequence. If not found, search at the sink counter.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1",
+        "scan_capture_required": true,
+        "runtime_replan_enabled": true,
+        "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，將其拿給長輩，等待30秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃；若沒看到藥罐，去浴室洗手台找，找到後再將其拿給長輩，等待30秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃。"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:28",
+    "parent_task_id": 8,
+    "parent_task_name": "Pour cola into cup and move to coffee table",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cola",
+        "location_id": 5,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the cola at the bar counter (location 5).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 8,
+        "global_id": "8_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "cup",
+        "location_id": 4,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the cup at the dining table (location 4).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 8,
+        "global_id": "8_2"
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "target_object": "cola -> cup",
+        "location_id": 4,
+        "hand_used": null,
+        "estimated_duration": 110,
+        "dependencies": [
+          "8_1",
+          "8_2"
+        ],
+        "description": "Pour cola into the cup at the dining table (location 4). Requires holding both cola and cup first.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 8,
+        "global_id": "8_3"
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "cup",
+        "location_id": 2,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "8_3"
+        ],
+        "description": "Move the cup with cola to the coffee table (location 2).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 8,
+        "global_id": "8_4"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:30",
+    "parent_task_id": 9,
+    "parent_task_name": "Move medicine jar to master vanity",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 11,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the medicine jar from the master bedside table (location 11).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 9,
+        "global_id": "9_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 12,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "9_1"
+        ],
+        "description": "Place the medicine jar on the master vanity (location 12).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 9,
+        "global_id": "9_2"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:32",
+    "parent_task_id": 10,
+    "parent_task_name": "Scan snack cabinet for a bowl",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "SCAN_TABLE_OBJECTS",
+        "target_object": null,
+        "location_id": 6,
+        "hand_used": null,
+        "estimated_duration": 20,
+        "dependencies": [],
+        "description": "Scan the snack cabinet (location 6) to check for the presence of a bowl. If a bowl is found, proceed with the subsequent tasks. If not, do not execute further tasks.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 10,
+        "global_id": "10_1",
+        "scan_capture_required": true,
+        "runtime_replan_enabled": true,
+        "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 bowl，執行去飲水機加滿熱水，送到茶几，等待 180 秒，然後去電視櫃拿遙控器放在碗旁邊；若沒看到 bowl，則不執行後續任務。"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:37",
+    "parent_task_id": 11,
+    "parent_task_name": "Deliver apple and orange to guest desk",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "apple",
+        "location_id": 4,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the apple from the dining table (location 4).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 11,
+        "global_id": "11_1"
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "orange",
+        "location_id": 4,
+        "hand_used": null,
+        "estimated_duration": 55,
+        "dependencies": [],
+        "description": "Pick up the orange from the dining table (location 4).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 11,
+        "global_id": "11_2"
+      },
+      {
+        "step_id": 3,
+        "action_type": "PLACE",
+        "target_object": "apple",
+        "location_id": 15,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "11_1"
+        ],
+        "description": "Deliver the apple to the guest desk (location 15).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 11,
+        "global_id": "11_3"
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "orange",
+        "location_id": 15,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "11_2"
+        ],
+        "description": "Deliver the orange to the guest desk (location 15).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 11,
+        "global_id": "11_4"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:38",
+    "parent_task_id": 12,
+    "parent_task_name": "Scan and relocate items from master vanity",
+    "subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "SCAN_TABLE_OBJECTS",
+        "target_object": null,
+        "location_id": 12,
+        "hand_used": null,
+        "estimated_duration": 20,
+        "dependencies": [],
+        "description": "Scan the master vanity (location 12) to check for the presence of comb and glasses_case. If found, relocate them as specified.",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 12,
+        "global_id": "12_1",
+        "scan_capture_required": true,
+        "runtime_replan_enabled": true,
+        "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到梳子和眼鏡盒，將梳子拿去主臥床頭櫃，眼鏡盒拿去浴室洗手台；若沒看到梳子和眼鏡盒，則不執行任何動作。"
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-04-20 08:47:41",
+    "parent_task_id": 13,
     "parent_task_name": "Transfer and fill cup with mineral water",
     "subtasks": [
       {
-        "step_id": 3,
+        "step_id": 2,
         "action_type": "SCAN_TABLE_OBJECTS",
         "target_object": null,
         "location_id": 5,
@@ -142,383 +546,115 @@
         "description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 4,
-        "global_id": "4_3",
+        "parent_id": 13,
+        "global_id": "13_2",
         "scan_capture_required": true,
         "runtime_replan_enabled": true,
-        "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。"
+        "post_scan_instruction": "Pick up the cup from the master_desk and take it to the bar_counter. 先掃描，掃描後逐項插入後續任務. 若看到 mineral_water，將其倒入杯子中；若沒看到 mineral_water，前往 fridge 拿取 mineral_water 並倒入杯子中。最後，將滿杯的水送回 master_desk。"
       }
     ]
   },
   {
-    "timestamp": "2026-04-20 05:38:55",
-    "parent_task_id": 5,
-    "parent_task_name": "Scan coffee table and process items",
-    "subtasks": [
-      {
-        "step_id": 1,
-        "action_type": "SCAN_TABLE_OBJECTS",
-        "target_object": null,
-        "location_id": 2,
-        "hand_used": null,
-        "estimated_duration": 20,
-        "dependencies": [],
-        "description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
-        "urgency_level": "priority",
-        "urgency_score": 3,
-        "parent_id": 5,
-        "global_id": "5_1",
-        "scan_capture_required": true,
-        "runtime_replan_enabled": true,
-        "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。"
-      }
-    ]
-  },
-  {
-    "timestamp": "2026-04-20 05:39:00",
-    "parent_task_id": 6,
-    "parent_task_name": "Collect keyring and comb, deliver to dining table",
-    "subtasks": [
-      {
-        "step_id": 1,
-        "action_type": "OPEN_CABINET",
-        "target_object": "cabinet",
-        "location_id": 18,
-        "hand_used": null,
-        "estimated_duration": 110,
-        "dependencies": [],
-        "description": "Open the entry shoe cabinet to access the keyring.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_1"
-      },
-      {
-        "step_id": 2,
-        "action_type": "PICK",
-        "target_object": "keyring",
-        "location_id": 18,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [
-          "6_1"
-        ],
-        "description": "Pick up the keyring from the entry shoe cabinet.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_2"
-      },
-      {
-        "step_id": 3,
-        "action_type": "CLOSE_CABINET",
-        "target_object": "cabinet",
-        "location_id": 18,
-        "hand_used": null,
-        "estimated_duration": 90,
-        "dependencies": [
-          "6_2"
-        ],
-        "description": "Close the entry shoe cabinet after picking up the keyring.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_3"
-      },
-      {
-        "step_id": 4,
-        "action_type": "PICK",
-        "target_object": "comb",
-        "location_id": 12,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [],
-        "description": "Pick up the comb from the master vanity.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_4"
-      },
-      {
-        "step_id": 5,
-        "action_type": "PLACE",
-        "target_object": "keyring",
-        "location_id": 4,
-        "hand_used": null,
-        "estimated_duration": 35,
-        "dependencies": [
-          "6_2",
-          "6_4"
-        ],
-        "description": "Place the keyring on the dining table.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_5"
-      },
-      {
-        "step_id": 6,
-        "action_type": "PLACE",
-        "target_object": "comb",
-        "location_id": 4,
-        "hand_used": null,
-        "estimated_duration": 35,
-        "dependencies": [
-          "6_2",
-          "6_4"
-        ],
-        "description": "Place the comb on the dining table.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 6,
-        "global_id": "6_6"
-      }
-    ]
-  },
-  {
-    "timestamp": "2026-04-20 05:39:02",
-    "parent_task_id": 7,
-    "parent_task_name": "Collect notebook and pen, deliver to dining table",
+    "timestamp": "2026-04-20 08:47:43",
+    "parent_task_id": 14,
+    "parent_task_name": "Move notebook from tv_cabinet to dining_table",
     "subtasks": [
       {
         "step_id": 1,
         "action_type": "PICK",
         "target_object": "notebook",
-        "location_id": 13,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [],
-        "description": "Pick up the notebook from the master desk (location 13).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 7,
-        "global_id": "7_1"
-      },
-      {
-        "step_id": 2,
-        "action_type": "PICK",
-        "target_object": "pen",
-        "location_id": 16,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [],
-        "description": "Pick up the pen from the study computer desk (location 16).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 7,
-        "global_id": "7_2"
-      },
-      {
-        "step_id": 3,
-        "action_type": "PLACE",
-        "target_object": "notebook",
-        "location_id": 4,
-        "hand_used": null,
-        "estimated_duration": 35,
-        "dependencies": [
-          "7_1"
-        ],
-        "description": "Deliver the notebook to the dining table (location 4).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 7,
-        "global_id": "7_3"
-      },
-      {
-        "step_id": 4,
-        "action_type": "PLACE",
-        "target_object": "pen",
-        "location_id": 4,
-        "hand_used": null,
-        "estimated_duration": 35,
-        "dependencies": [
-          "7_2"
-        ],
-        "description": "Deliver the pen to the dining table (location 4).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 7,
-        "global_id": "7_4"
-      }
-    ]
-  },
-  {
-    "timestamp": "2026-04-20 05:39:04",
-    "parent_task_id": 8,
-    "parent_task_name": "Move remote control to tv cabinet",
-    "subtasks": [
-      {
-        "step_id": 1,
-        "action_type": "PICK",
-        "target_object": "remote_control",
-        "location_id": 2,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [],
-        "description": "Pick up the remote control from the coffee table (location 2).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 8,
-        "global_id": "8_1"
-      },
-      {
-        "step_id": 2,
-        "action_type": "PLACE",
-        "target_object": "remote_control",
         "location_id": 1,
         "hand_used": null,
-        "estimated_duration": 35,
-        "dependencies": [
-          "8_1"
-        ],
-        "description": "Place the remote control on the tv cabinet (location 1).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 8,
-        "global_id": "8_2"
-      }
-    ]
-  },
-  {
-    "timestamp": "2026-04-20 05:39:05",
-    "parent_task_id": 9,
-    "parent_task_name": "Move notebook to bookshelf",
-    "subtasks": [
-      {
-        "step_id": 1,
-        "action_type": "PICK",
-        "target_object": "notebook",
-        "location_id": 3,
-        "hand_used": null,
         "estimated_duration": 55,
         "dependencies": [],
-        "description": "Pick up the notebook from the small round side table (location 3).",
+        "description": "Pick up the notebook from the tv_cabinet (location 1).",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 9,
-        "global_id": "9_1"
+        "parent_id": 14,
+        "global_id": "14_1"
       },
       {
         "step_id": 2,
         "action_type": "PLACE",
         "target_object": "notebook",
-        "location_id": 17,
+        "location_id": 4,
         "hand_used": null,
         "estimated_duration": 35,
         "dependencies": [
-          "9_1"
+          "14_1"
         ],
-        "description": "Place the notebook on the bookshelf (location 17).",
+        "description": "Place the notebook on the dining_table (location 4).",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 9,
-        "global_id": "9_2"
+        "parent_id": 14,
+        "global_id": "14_2"
       }
     ]
   },
   {
-    "timestamp": "2026-04-20 05:39:08",
-    "parent_task_id": 10,
-    "parent_task_name": "Retrieve bowl and move to stove side counter",
+    "timestamp": "2026-04-20 08:47:48",
+    "parent_task_id": 15,
+    "parent_task_name": "Move salt shaker and instant powder packet to dining table",
     "subtasks": [
       {
         "step_id": 1,
-        "action_type": "OPEN_CABINET",
-        "target_object": "cabinet",
-        "location_id": 10,
+        "action_type": "PICK",
+        "target_object": "salt_shaker",
+        "location_id": 9,
         "hand_used": null,
-        "estimated_duration": 110,
+        "estimated_duration": 55,
         "dependencies": [],
-        "description": "Open the cabinet to access the bowl.",
+        "description": "Pick up the salt shaker from the stove side counter (location 9).",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 10,
-        "global_id": "10_1"
+        "parent_id": 15,
+        "global_id": "15_1"
       },
       {
         "step_id": 2,
         "action_type": "PICK",
-        "target_object": "bowl",
-        "location_id": 10,
+        "target_object": "instant_powder_packet",
+        "location_id": 5,
         "hand_used": null,
         "estimated_duration": 55,
-        "dependencies": [
-          "10_1"
-        ],
-        "description": "Pick up the bowl from the cabinet.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 10,
-        "global_id": "10_2"
-      },
-      {
-        "step_id": 3,
-        "action_type": "WAIT",
-        "target_object": null,
-        "location_id": 9,
-        "hand_used": null,
-        "estimated_duration": 60,
-        "dependencies": [
-          "10_2"
-        ],
-        "description": "Move to the stove side counter and wait for 10 seconds.",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 10,
-        "global_id": "10_3"
-      }
-    ]
-  },
-  {
-    "timestamp": "2026-04-20 05:39:11",
-    "parent_task_id": 11,
-    "parent_task_name": "Move bowl to coffee table",
-    "subtasks": [
-      {
-        "step_id": 1,
-        "action_type": "WAIT",
-        "target_object": null,
-        "location_id": 9,
-        "hand_used": null,
-        "estimated_duration": 60,
         "dependencies": [],
-        "description": "Wait for a specified duration before starting the task.",
+        "description": "Pick up the instant powder packet from the bar counter (location 5).",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 11,
-        "global_id": "11_1"
-      },
-      {
-        "step_id": 2,
-        "action_type": "PICK",
-        "target_object": "bowl",
-        "location_id": 9,
-        "hand_used": null,
-        "estimated_duration": 55,
-        "dependencies": [
-          "11_1"
-        ],
-        "description": "Pick up the bowl from the stove side counter (location 9).",
-        "urgency_level": "normal",
-        "urgency_score": 0,
-        "parent_id": 11,
-        "global_id": "11_2"
+        "parent_id": 15,
+        "global_id": "15_2"
       },
       {
         "step_id": 3,
         "action_type": "PLACE",
-        "target_object": "bowl",
-        "location_id": 2,
+        "target_object": "salt_shaker",
+        "location_id": 4,
         "hand_used": null,
         "estimated_duration": 35,
         "dependencies": [
-          "11_2"
+          "15_1"
         ],
-        "description": "Place the bowl on the coffee table (location 2).",
+        "description": "Place the salt shaker on the dining table (location 4).",
         "urgency_level": "normal",
         "urgency_score": 0,
-        "parent_id": 11,
-        "global_id": "11_3"
+        "parent_id": 15,
+        "global_id": "15_3"
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "instant_powder_packet",
+        "location_id": 4,
+        "hand_used": null,
+        "estimated_duration": 35,
+        "dependencies": [
+          "15_2"
+        ],
+        "description": "Place the instant powder packet on the dining table (location 4).",
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 15,
+        "global_id": "15_4"
       }
     ]
   }

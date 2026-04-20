@@ -23,6 +23,15 @@ class DABC:
         w4=1.0,
         neighbor_attempts_per_bee=1,
         onlooker_multiplier=1.0,
+        dynamic_breadth_enabled=True,
+        max_neighbor_attempts_per_bee=5,
+        max_onlooker_multiplier=3.0,
+        dynamic_onlooker_step=0.25,
+        dynamic_stagnation_window_blocks=2,
+        dynamic_improve_threshold_pct=0.3,
+        dynamic_high_infeasible_threshold=0.78,
+        dynamic_recovery_improve_pct=1.0,
+        dynamic_recovery_infeasible_threshold=0.60,
     ):
         
         self.task_ids = list(task_lookup.keys())
@@ -32,6 +41,20 @@ class DABC:
         self.limit = limit  # 偵查蜂重複次數限制 如果一個解連續 limit 次沒變好，就放棄它
         self.neighbor_attempts_per_bee = max(1, int(neighbor_attempts_per_bee))
         self.onlooker_multiplier = max(1.0, float(onlooker_multiplier))
+        self.base_neighbor_attempts_per_bee = int(self.neighbor_attempts_per_bee)
+        self.base_onlooker_multiplier = float(self.onlooker_multiplier)
+        self.dynamic_breadth_enabled = bool(dynamic_breadth_enabled)
+        self.max_neighbor_attempts_per_bee = max(self.base_neighbor_attempts_per_bee, int(max_neighbor_attempts_per_bee))
+        self.max_onlooker_multiplier = max(self.base_onlooker_multiplier, float(max_onlooker_multiplier))
+        self.dynamic_onlooker_step = max(0.05, float(dynamic_onlooker_step))
+        self.dynamic_stagnation_window_blocks = max(1, int(dynamic_stagnation_window_blocks))
+        self.dynamic_improve_threshold_pct = max(0.0, float(dynamic_improve_threshold_pct))
+        self.dynamic_high_infeasible_threshold = min(1.0, max(0.0, float(dynamic_high_infeasible_threshold)))
+        self.dynamic_recovery_improve_pct = max(0.0, float(dynamic_recovery_improve_pct))
+        self.dynamic_recovery_infeasible_threshold = min(1.0, max(0.0, float(dynamic_recovery_infeasible_threshold)))
+        self._prev_block_best_fit = float('inf')
+        self._stagnation_blocks = 0
+        self._recovery_blocks = 0
         
         
         self.population = [] # 存解
@@ -122,13 +145,23 @@ class DABC:
                 block_elapsed = now - last_log_time
                 total_elapsed = now - start_time
                 last_log_time = now
+                improve_pct_10iter = self._compute_improve_pct_10iter(self._prev_block_best_fit, self.global_best_fit)
+                self._prev_block_best_fit = self.global_best_fit
                 self._diag["iter_time_logs"].append({
                     "iteration": iteration + 1,
                     "elapsed_10_iters_sec": block_elapsed,
                     "elapsed_total_sec": total_elapsed,
                     "phase": self._current_phase,
+                    "improve_pct_10iter": improve_pct_10iter,
+                    "neighbor_attempts_per_bee": int(self.neighbor_attempts_per_bee),
+                    "onlooker_multiplier": float(self.onlooker_multiplier),
                 })
                 recent_infeasible_rate = self._recent_infeasible_rate()
+                self._auto_tune_search_breadth(
+                    iteration=iteration + 1,
+                    improve_pct_10iter=improve_pct_10iter,
+                    recent_infeasible_rate=recent_infeasible_rate,
+                )
                 print(
                     f"Iter {iteration + 1}: Best Fitness = {self.global_best_fit} | "
                     f"accepted={self._diag['accepted']} "
@@ -136,6 +169,9 @@ class DABC:
                     f"rejected_not_better={self._diag['rejected_not_better']} "
                     f"phase={self._current_phase} "
                     f"infeasible_rate_recent={recent_infeasible_rate:.3f} "
+                    f"improve_pct_10iter={improve_pct_10iter:.3f}% "
+                    f"neighbor_attempts_per_bee={self.neighbor_attempts_per_bee} "
+                    f"onlooker_multiplier={self.onlooker_multiplier:.2f} "
                     f"time_10iter={block_elapsed:.3f}s "
                     f"time_total={total_elapsed:.3f}s"
                 )
@@ -153,6 +189,7 @@ class DABC:
             "repair_retry_success": 0,
             "repair_retry_fail": 0,
             "iter_time_logs": [],
+            "breadth_adjustments": [],
         }
 
     def _reset_iteration_diagnostics(self):
@@ -202,11 +239,121 @@ class DABC:
             "phase": self._current_phase,
             "neighbor_attempts_per_bee": int(self.neighbor_attempts_per_bee),
             "onlooker_multiplier": float(self.onlooker_multiplier),
+            "dynamic_breadth_enabled": bool(self.dynamic_breadth_enabled),
+            "dynamic_breadth_config": {
+                "max_neighbor_attempts_per_bee": int(self.max_neighbor_attempts_per_bee),
+                "max_onlooker_multiplier": float(self.max_onlooker_multiplier),
+                "dynamic_onlooker_step": float(self.dynamic_onlooker_step),
+                "dynamic_stagnation_window_blocks": int(self.dynamic_stagnation_window_blocks),
+                "dynamic_improve_threshold_pct": float(self.dynamic_improve_threshold_pct),
+                "dynamic_high_infeasible_threshold": float(self.dynamic_high_infeasible_threshold),
+                "dynamic_recovery_improve_pct": float(self.dynamic_recovery_improve_pct),
+                "dynamic_recovery_infeasible_threshold": float(self.dynamic_recovery_infeasible_threshold),
+            },
+            "dynamic_breadth_state": {
+                "stagnation_blocks": int(self._stagnation_blocks),
+                "recovery_blocks": int(self._recovery_blocks),
+            },
             "operator_weights": dict(self._operator_weights),
             "elite_archive_size": len(self.elite_archive),
             "iter_time_logs": list(self._diag["iter_time_logs"]),
+            "breadth_adjustments": list(self._diag["breadth_adjustments"]),
             "operator_stats": op_stats,
         }
+
+    @staticmethod
+    def _compute_improve_pct_10iter(prev_best, current_best):
+        if prev_best == float('inf') and current_best == float('inf'):
+            return 0.0
+        if prev_best == float('inf') and current_best != float('inf'):
+            return 100.0
+        if current_best == float('inf'):
+            return 0.0
+
+        denom = max(1e-9, abs(float(prev_best)))
+        delta = float(prev_best) - float(current_best)
+        return max(0.0, (delta / denom) * 100.0)
+
+    def _auto_tune_search_breadth(self, iteration, improve_pct_10iter, recent_infeasible_rate):
+        if not self.dynamic_breadth_enabled:
+            return
+
+        stagnating = improve_pct_10iter < self.dynamic_improve_threshold_pct
+        infeasible_high = recent_infeasible_rate >= self.dynamic_high_infeasible_threshold
+
+        if stagnating or infeasible_high:
+            self._stagnation_blocks += 1
+            self._recovery_blocks = 0
+        else:
+            self._stagnation_blocks = max(0, self._stagnation_blocks - 1)
+            recovering = (
+                improve_pct_10iter >= self.dynamic_recovery_improve_pct
+                and recent_infeasible_rate <= self.dynamic_recovery_infeasible_threshold
+            )
+            if recovering:
+                self._recovery_blocks += 1
+            else:
+                self._recovery_blocks = 0
+
+        if self._stagnation_blocks >= self.dynamic_stagnation_window_blocks:
+            old_neighbor = self.neighbor_attempts_per_bee
+            old_onlooker = self.onlooker_multiplier
+
+            self.neighbor_attempts_per_bee = min(
+                self.max_neighbor_attempts_per_bee,
+                self.neighbor_attempts_per_bee + 1,
+            )
+            self.onlooker_multiplier = min(
+                self.max_onlooker_multiplier,
+                self.onlooker_multiplier + self.dynamic_onlooker_step,
+            )
+
+            if (
+                self.neighbor_attempts_per_bee != old_neighbor
+                or abs(self.onlooker_multiplier - old_onlooker) > 1e-9
+            ):
+                self._diag["breadth_adjustments"].append({
+                    "iteration": int(iteration),
+                    "action": "expand",
+                    "reason": "stagnation_or_high_infeasible",
+                    "improve_pct_10iter": float(improve_pct_10iter),
+                    "infeasible_rate_recent": float(recent_infeasible_rate),
+                    "neighbor_attempts_per_bee_before": int(old_neighbor),
+                    "neighbor_attempts_per_bee_after": int(self.neighbor_attempts_per_bee),
+                    "onlooker_multiplier_before": float(old_onlooker),
+                    "onlooker_multiplier_after": float(self.onlooker_multiplier),
+                })
+            self._stagnation_blocks = 0
+
+        if self._recovery_blocks >= 2:
+            old_neighbor = self.neighbor_attempts_per_bee
+            old_onlooker = self.onlooker_multiplier
+
+            self.neighbor_attempts_per_bee = max(
+                self.base_neighbor_attempts_per_bee,
+                self.neighbor_attempts_per_bee - 1,
+            )
+            self.onlooker_multiplier = max(
+                self.base_onlooker_multiplier,
+                self.onlooker_multiplier - self.dynamic_onlooker_step,
+            )
+
+            if (
+                self.neighbor_attempts_per_bee != old_neighbor
+                or abs(self.onlooker_multiplier - old_onlooker) > 1e-9
+            ):
+                self._diag["breadth_adjustments"].append({
+                    "iteration": int(iteration),
+                    "action": "contract",
+                    "reason": "recovery",
+                    "improve_pct_10iter": float(improve_pct_10iter),
+                    "infeasible_rate_recent": float(recent_infeasible_rate),
+                    "neighbor_attempts_per_bee_before": int(old_neighbor),
+                    "neighbor_attempts_per_bee_after": int(self.neighbor_attempts_per_bee),
+                    "onlooker_multiplier_before": float(old_onlooker),
+                    "onlooker_multiplier_after": float(self.onlooker_multiplier),
+                })
+            self._recovery_blocks = 0
 
     def _determine_phase(self, iteration):
         if iteration < self.phase1_min_iters:
