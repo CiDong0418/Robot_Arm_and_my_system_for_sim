@@ -1,0 +1,2 @@
+Robot:dabc_optimizer:image:robot_ui:task_execution:task_manager:voice
+-DCATKIN_DEVEL_PREFIX=/root/my_workspace/Robot_Arm_and_my_system/devel -DCMAKE_INSTALL_PREFIX=/root/my_workspace/Robot_Arm_and_my_system/install -G Unix Makefiles

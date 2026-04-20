@@ -1,0 +1,4784 @@
+[
+  {
+    "timestamp": "2026-04-17T15:10:48.907904+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [
+      "comb",
+      "glasses_case"
+    ],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the drink cup with warm water on the guest bedside table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up a drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Place the drink cup with warm water on the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_6",
+        "dependencies": [
+          "3_1__sim_5",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-17T15:10:49.929861+00:00",
+    "scan_task_id": "4_1",
+    "scan_location_id": 14,
+    "visible_objects": [
+      "comb",
+      "drink_cup",
+      "glasses_case"
+    ],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，將其拿給長輩，等待30秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃；若沒看到藥罐，去浴室洗手台找，找到後再將其拿給長輩，等待30秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-17T15:15:43.744586+00:00",
+    "scan_task_id": "1_1",
+    "scan_location_id": 3,
+    "visible_objects": [],
+    "task_description": "Scan the small round side table (location 3) to identify items. If empty juice or mineral water is found, take them to the sink counter to dispose. Otherwise, get a new wet wipe from the hallway storage cabinet and place it on the table.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到空果汁或礦泉水，拿去流理台丟掉；若沒看到空果汁或礦泉水，直接拿一包新的濕紙巾過去放著。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the wet wipe."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up a new wet wipe from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after picking up the wet wipe."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the new wet wipe on the small round side table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the wet wipe.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_1",
+        "dependencies": [
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a new wet wipe from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_2",
+        "dependencies": [
+          "1_1__sim_1",
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after picking up the wet wipe.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_3",
+        "dependencies": [
+          "1_1__sim_2",
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "description": "Place the new wet wipe on the small round side table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_4",
+        "dependencies": [
+          "1_1__sim_3",
+          "1_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-17T15:15:50.807924+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, deliver it to the elder; if not found, search at the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，將其拿給長輩；若沒看到藥罐，去浴室洗手台找，然後將其拿給長輩。等待 30 秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the medicine jar from the sink counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Deliver the medicine jar to the elder at the guest bedside table."
+      },
+      {
+        "step_id": 3,
+        "action_type": "WAIT",
+        "target_object": null,
+        "location_id": null,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Wait for 30 seconds after delivering the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Pick up the medicine jar from the guest bedside table after waiting."
+      },
+      {
+        "step_id": 5,
+        "action_type": "PICK",
+        "target_object": "cloth",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a cloth from the hallway storage cabinet."
+      },
+      {
+        "step_id": 6,
+        "action_type": "WIPE_SURFACE",
+        "target_object": null,
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [
+          4,
+          5
+        ],
+        "description": "Wipe the medicine jar at the sink counter using the cloth."
+      },
+      {
+        "step_id": 7,
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          6
+        ],
+        "description": "Place the cleaned medicine jar back into the hallway storage cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the sink counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_1",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Deliver the medicine jar to the elder at the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_2",
+        "dependencies": [
+          "7_1__sim_1",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "WAIT",
+        "target_object": null,
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Wait for 30 seconds after delivering the medicine jar.",
+        "estimated_duration": 60,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_3",
+        "dependencies": [
+          "7_1__sim_2",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the guest bedside table after waiting.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_4",
+        "dependencies": [
+          "7_1__sim_3",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cloth",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a cloth from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_5",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "WIPE_SURFACE",
+        "target_object": null,
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Wipe the medicine jar at the sink counter using the cloth.",
+        "estimated_duration": 30,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_6",
+        "dependencies": [
+          "7_1__sim_4",
+          "7_1__sim_5",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Place the cleaned medicine jar back into the hallway storage cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_7",
+        "dependencies": [
+          "7_1__sim_6",
+          "7_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-17T15:15:57.137445+00:00",
+    "scan_task_id": "1_1",
+    "scan_location_id": 3,
+    "visible_objects": [],
+    "task_description": "Scan the small round side table (location 3) to identify items. If empty juice or mineral water is found, take them to the sink counter to dispose. Otherwise, get a new wet wipe from the hallway storage cabinet and place it on the table.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到空果汁或礦泉水，拿去流理台丟掉；若沒看到空果汁或礦泉水，直接拿一包新的濕紙巾過去放著。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the wet wipe."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up a new wet wipe from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after picking up the wet wipe."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the new wet wipe on the small round side table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the wet wipe.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_1",
+        "dependencies": [
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a new wet wipe from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_2",
+        "dependencies": [
+          "1_1__sim_1",
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after picking up the wet wipe.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_3",
+        "dependencies": [
+          "1_1__sim_2",
+          "1_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "description": "Place the new wet wipe on the small round side table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 1,
+        "global_id": "1_1__sim_4",
+        "dependencies": [
+          "1_1__sim_3",
+          "1_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-17T15:16:03.168694+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, deliver it to the elder; if not found, search at the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，將其拿給長輩；若沒看到藥罐，去浴室洗手台找，然後將其拿給長輩。等待 30 秒後，再把藥罐拿去流理台用抹布擦拭後放回收納櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the medicine jar from the sink counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Deliver the medicine jar to the elder at the guest bedside table."
+      },
+      {
+        "step_id": 3,
+        "action_type": "WAIT",
+        "target_object": null,
+        "location_id": null,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Wait for 30 seconds after delivering the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Pick up the medicine jar from the guest bedside table after waiting."
+      },
+      {
+        "step_id": 5,
+        "action_type": "PICK",
+        "target_object": "cloth",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a cloth from the hallway storage cabinet."
+      },
+      {
+        "step_id": 6,
+        "action_type": "WIPE_SURFACE",
+        "target_object": null,
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [
+          4,
+          5
+        ],
+        "description": "Wipe the medicine jar at the sink counter using the cloth."
+      },
+      {
+        "step_id": 7,
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          6
+        ],
+        "description": "Place the cleaned medicine jar back into the hallway storage cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the sink counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_1",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Deliver the medicine jar to the elder at the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_2",
+        "dependencies": [
+          "7_1__sim_1",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "WAIT",
+        "target_object": null,
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Wait for 30 seconds after delivering the medicine jar.",
+        "estimated_duration": 60,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_3",
+        "dependencies": [
+          "7_1__sim_2",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the guest bedside table after waiting.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_4",
+        "dependencies": [
+          "7_1__sim_3",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cloth",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a cloth from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_5",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "WIPE_SURFACE",
+        "target_object": null,
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Wipe the medicine jar at the sink counter using the cloth.",
+        "estimated_duration": 30,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_6",
+        "dependencies": [
+          "7_1__sim_4",
+          "7_1__sim_5",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Place the cleaned medicine jar back into the hallway storage cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_7",
+        "dependencies": [
+          "7_1__sim_6",
+          "7_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:34.055148+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "pen"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:34.793437+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 4,
+    "visible_objects": [
+      "apple",
+      "banana",
+      "orange"
+    ],
+    "task_description": "Scan the dining table to identify items. Based on the scan, sort non-dining items to the coffee table and dining items to the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到不是餐具的東西（如遙控器、鑰匙串），將它們放到茶几上；若看到餐具（杯子、碗），將它們收回流理台。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:35.647203+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "mineral_water",
+      "pen"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:36.451210+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "mineral_water",
+      "orange",
+      "pen"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:37.113169+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:38.678194+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 4,
+    "visible_objects": [
+      "apple",
+      "banana",
+      "notebook",
+      "orange"
+    ],
+    "task_description": "Scan the dining table to identify items. Based on the scan, sort non-dining items to the coffee table and dining items to the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到不是餐具的東西（如遙控器、鑰匙串），將它們放到茶几上；若看到餐具（杯子、碗），將它們收回流理台。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "notebook",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the notebook from the dining table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "notebook",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the notebook on the coffee table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "notebook",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the notebook from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_1",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "notebook",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Place the notebook on the coffee table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_2",
+        "dependencies": [
+          "7_1__sim_1",
+          "7_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:40.972091+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 4,
+    "visible_objects": [
+      "apple",
+      "banana"
+    ],
+    "task_description": "Scan the dining table to identify items. Based on the scan, sort non-dining items to the coffee table and dining items to the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到不是餐具的東西（如遙控器、鑰匙串），將它們放到茶几上；若看到餐具（杯子、碗），將它們收回流理台。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "apple",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the apple from the dining table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "apple",
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the apple on the sink counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "PICK",
+        "target_object": "banana",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the banana from the dining table."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "banana",
+        "location_id": 8,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the banana on the sink counter."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "apple",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the apple from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_1",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "apple",
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Place the apple on the sink counter.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_2",
+        "dependencies": [
+          "7_1__sim_1",
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "banana",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the banana from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_3",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "banana",
+        "location_id": 8,
+        "hand_used": null,
+        "description": "Place the banana on the sink counter.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_4",
+        "dependencies": [
+          "7_1__sim_3",
+          "7_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:41.653164+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "orange"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:43.013609+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 4,
+    "visible_objects": [
+      "apple",
+      "banana",
+      "notebook"
+    ],
+    "task_description": "Scan the dining table to identify items. Based on the scan, sort non-dining items to the coffee table and dining items to the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到不是餐具的東西（如遙控器、鑰匙串），將它們放到茶几上；若看到餐具（杯子、碗），將它們收回流理台。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "notebook",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the notebook from the dining table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "notebook",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the notebook on the coffee table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "notebook",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the notebook from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_1",
+        "dependencies": [
+          "7_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "notebook",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Place the notebook on the coffee table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 7,
+        "global_id": "7_1__sim_2",
+        "dependencies": [
+          "7_1__sim_1",
+          "7_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:43.658372+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "orange",
+      "pen"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:44.438408+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "mineral_water"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:45.101038+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "mineral_water",
+      "orange"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:49.714185+00:00",
+    "scan_task_id": "7_1",
+    "scan_location_id": 4,
+    "visible_objects": [
+      "apple",
+      "banana",
+      "orange"
+    ],
+    "task_description": "Scan the dining table to identify items. Based on the scan, sort non-dining items to the coffee table and dining items to the sink counter.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到不是餐具的東西（如遙控器、鑰匙串），將它們放到茶几上；若看到餐具（杯子、碗），將它們收回流理台。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T10:01:50.478457+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 13,
+    "visible_objects": [
+      "mineral_water",
+      "pen"
+    ],
+    "task_description": "Scan the master desk (location 13) for the presence of glasses_case. If found, exchange with keyring at entry_shoe_cabinet (location 18). If not found, no further actions.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到眼鏡盒，執行：將眼鏡盒從主臥書桌拿到玄關鞋櫃，並將鞋櫃上的鑰匙串拿回主臥書桌；若沒看到眼鏡盒，執行：不進行任何物品移動。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T11:42:23.160227+00:00",
+    "scan_task_id": "4_1",
+    "scan_location_id": 6,
+    "visible_objects": [
+      "cookie"
+    ],
+    "task_description": "Scan the snack cabinet (location 6) for a bowl. If found, proceed to heat water and deliver to the coffee table; otherwise, do not execute further tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 bowl，執行加熱水並送到茶几；若沒看到 bowl，則不執行後續任務。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-18T11:42:24.130652+00:00",
+    "scan_task_id": "4_1",
+    "scan_location_id": 6,
+    "visible_objects": [],
+    "task_description": "Scan the snack cabinet (location 6) for a bowl. If found, proceed to heat water and deliver to the coffee table; otherwise, do not execute further tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 bowl，執行加熱水並送到茶几；若沒看到 bowl，則不執行後續任務。",
+    "llm_raw_subtasks": [],
+    "normalized_subtasks": [],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:05:16.804522+00:00",
+    "scan_task_id": "6_1",
+    "scan_location_id": 3,
+    "visible_objects": [],
+    "task_description": "Scan the small round side table to identify items present. If empty juice or mineral water is found, plan to dispose of them at the sink counter. Otherwise, plan to bring a new wet wipe to the table.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到空果汁或礦泉水，拿去流理台丟掉；若沒看到空果汁或礦泉水，則直接拿一包新的濕紙巾過去放著。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a new wet wipe from the hallway storage cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the new wet wipe on the small round side table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a new wet wipe from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_1__sim_1",
+        "dependencies": [
+          "6_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "description": "Place the new wet wipe on the small round side table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_1__sim_2",
+        "dependencies": [
+          "6_1__sim_1",
+          "6_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:05:23.438751+00:00",
+    "scan_task_id": "6_1",
+    "scan_location_id": 3,
+    "visible_objects": [],
+    "task_description": "Scan the small round side table to identify items present. If empty juice or mineral water is found, plan to dispose of them at the sink counter. Otherwise, plan to bring a new wet wipe to the table.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到空果汁或礦泉水，拿去流理台丟掉；若沒看到空果汁或礦泉水，則直接拿一包新的濕紙巾過去放著。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a new wet wipe from the hallway storage cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the new wet wipe on the small round side table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "wet_wipe",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up a new wet wipe from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_1__sim_1",
+        "dependencies": [
+          "6_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "wet_wipe",
+        "location_id": 3,
+        "hand_used": null,
+        "description": "Place the new wet wipe on the small round side table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 6,
+        "global_id": "6_1__sim_2",
+        "dependencies": [
+          "6_1__sim_1",
+          "6_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:28.468121+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:30.876701+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_DRAWER",
+        "target_object": null,
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the drawer in the tv_cabinet to prepare for placing the scissors."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the scissors into the drawer in the tv_cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the drawer in the tv_cabinet after placing the scissors."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_DRAWER",
+        "target_object": null,
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Open the drawer in the tv_cabinet to prepare for placing the scissors.",
+        "estimated_duration": 80,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Place the scissors into the drawer in the tv_cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Close the drawer in the tv_cabinet after placing the scissors.",
+        "estimated_duration": 60,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_3",
+        "dependencies": [
+          "5_1__sim_2",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:32.160494+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the cookie on the dining table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:33.718211+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "cup",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the cookie on the dining table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:37.761355+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "cup",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 16,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the scissors from the study computer desk."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Place the cookie on the dining table."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the scissors on the dining table."
+      },
+      {
+        "step_id": 5,
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          3,
+          4
+        ],
+        "description": "Pick up the scissors from the dining table."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Pick up the cookie from the dining table."
+      },
+      {
+        "step_id": 7,
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the scissors back in the tv cabinet drawer."
+      },
+      {
+        "step_id": 8,
+        "action_type": "CLOSE_CABINET",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          7
+        ],
+        "description": "Close the tv cabinet drawer."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 16,
+        "hand_used": null,
+        "description": "Pick up the scissors from the study computer desk.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_3",
+        "dependencies": [
+          "5_1__sim_2",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the scissors on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_4",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the scissors from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_5",
+        "dependencies": [
+          "5_1__sim_3",
+          "5_1__sim_4",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the cookie from the dining table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_6",
+        "dependencies": [
+          "5_1__sim_3",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the scissors back in the tv cabinet drawer.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_7",
+        "dependencies": [
+          "5_1__sim_5",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Close the tv cabinet drawer.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_8",
+        "dependencies": [
+          "5_1__sim_7",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:50.996430+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the cookie on the dining table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:10:55.755198+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Pick up a drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up a drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:00.357882+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the drawer in the tv_cabinet to check for scissors."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the scissors from the tv_cabinet drawer."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the drawer in the tv_cabinet after picking up the scissors."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Pick up the cookie from the dining_table."
+      },
+      {
+        "step_id": 5,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Place the cookie back on the dining_table after cutting open the packaging."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the scissors back into the tv_cabinet drawer."
+      },
+      {
+        "step_id": 7,
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          6
+        ],
+        "description": "Close the drawer in the tv_cabinet after placing the scissors back."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Open the drawer in the tv_cabinet to check for scissors.",
+        "estimated_duration": 80,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Pick up the scissors from the tv_cabinet drawer.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Close the drawer in the tv_cabinet after picking up the scissors.",
+        "estimated_duration": 60,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_3",
+        "dependencies": [
+          "5_1__sim_2",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Pick up the cookie from the dining_table.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_4",
+        "dependencies": [
+          "5_1__sim_2",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie back on the dining_table after cutting open the packaging.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_5",
+        "dependencies": [
+          "5_1__sim_4",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "scissors",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the scissors back into the tv_cabinet drawer.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_6",
+        "dependencies": [
+          "5_1__sim_5",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_DRAWER",
+        "target_object": null,
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Close the drawer in the tv_cabinet after placing the scissors back.",
+        "estimated_duration": 60,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_7",
+        "dependencies": [
+          "5_1__sim_6",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:03.968233+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up a drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the drink cup with warm water on the guest bedside table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up a drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Place the drink cup with warm water on the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_6",
+        "dependencies": [
+          "3_1__sim_5",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:05.784300+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the cookie on the dining table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:09.759795+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [
+          2,
+          3
+        ],
+        "description": "Pick up a drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the drink cup with warm water on the guest bedside table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up a drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1__sim_3",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Place the drink cup with warm water on the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_6",
+        "dependencies": [
+          "3_1__sim_5",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:11.221131+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the cookie on the dining table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:14.634084+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [
+          2,
+          3
+        ],
+        "description": "Pick up a drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the drink cup with warm water on the guest bedside table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up a drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1__sim_3",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Place the drink cup with warm water on the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_6",
+        "dependencies": [
+          "3_1__sim_5",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:18.436519+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table for scissors. If found, pick up and use to cut open cookie packaging on dining table; if not found, execute alternative tasks.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到 scissors，執行將其拿起並剪開 dining_table 上的 cookie 包裝；若沒看到 scissors，執行其他任務。最後將 scissors 放回 tv_cabinet 的 drawer 並關上。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "utility_knife",
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the utility knife from the cabinet to use as an alternative to scissors."
+      },
+      {
+        "step_id": 2,
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the cabinet to access the utility knife."
+      },
+      {
+        "step_id": 3,
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the cookie from the snack cabinet."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the cookie on the dining table."
+      },
+      {
+        "step_id": 5,
+        "action_type": "PLACE",
+        "target_object": "utility_knife",
+        "location_id": 4,
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Place the utility knife on the dining table to cut open the cookie packaging."
+      },
+      {
+        "step_id": 6,
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 10,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the cabinet after retrieving the utility knife."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "utility_knife",
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Pick up the utility knife from the cabinet to use as an alternative to scissors.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": "cabinet",
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Open the cabinet to access the utility knife.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "cookie",
+        "location_id": 6,
+        "hand_used": null,
+        "description": "Pick up the cookie from the snack cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_3",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "cookie",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the cookie on the dining table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_4",
+        "dependencies": [
+          "5_1__sim_3",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "utility_knife",
+        "location_id": 4,
+        "hand_used": null,
+        "description": "Place the utility knife on the dining table to cut open the cookie packaging.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_5",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1__sim_2",
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": "cabinet",
+        "location_id": 10,
+        "hand_used": null,
+        "description": "Close the cabinet after retrieving the utility knife.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 5,
+        "global_id": "5_1__sim_6",
+        "dependencies": [
+          "5_1__sim_2",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:11:21.572819+00:00",
+    "scan_task_id": "3_1",
+    "scan_location_id": 14,
+    "visible_objects": [],
+    "task_description": "Scan the guest bedside table (location 14) to check for the presence of the medicine jar. If found, proceed to bar counter for water; if not found, retrieve from hallway storage cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到藥罐，去吧台倒一杯溫水並送到長輩房；若沒看到藥罐，先去走廊收納櫃拿藥罐，再去吧台倒一杯溫水並送到長輩房。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Open the hallway storage cabinet to access the medicine jar."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pick up the medicine jar from the hallway storage cabinet."
+      },
+      {
+        "step_id": 3,
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 5,
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "dependencies": [
+          4
+        ],
+        "description": "Use the water dispenser to fill the drink cup with warm water."
+      },
+      {
+        "step_id": 6,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "dependencies": [
+          5
+        ],
+        "description": "Place the drink cup with warm water on the guest bedside table."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "OPEN_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Open the hallway storage cabinet to access the medicine jar.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_1",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "medicine_jar",
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Pick up the medicine jar from the hallway storage cabinet.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_2",
+        "dependencies": [
+          "3_1__sim_1",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "CLOSE_CABINET",
+        "target_object": null,
+        "location_id": 19,
+        "hand_used": null,
+        "description": "Close the hallway storage cabinet after retrieving the medicine jar.",
+        "estimated_duration": 90,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_3",
+        "dependencies": [
+          "3_1__sim_2",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_4",
+        "dependencies": [
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "WATER_DISPENSER",
+        "target_object": null,
+        "location_id": 20,
+        "hand_used": null,
+        "description": "Use the water dispenser to fill the drink cup with warm water.",
+        "estimated_duration": 115,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_5",
+        "dependencies": [
+          "3_1__sim_4",
+          "3_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 14,
+        "hand_used": null,
+        "description": "Place the drink cup with warm water on the guest bedside table.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 3,
+        "global_id": "3_1__sim_6",
+        "dependencies": [
+          "3_1__sim_5",
+          "3_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:28.568141+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Place the remote_control back to the tv_cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote_control back to the tv_cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:30.976255+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 7,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the mineral water from the fridge."
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "source_object": "mineral_water",
+        "target_object": "drink_cup",
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Pour mineral water into the drink cup."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the filled drink cup on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 7,
+        "hand_used": null,
+        "description": "Pick up the mineral water from the fridge.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour mineral water into the drink cup.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3__sim_2",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_4",
+        "dependencies": [
+          "4_3__sim_3",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:32.196948+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Place the remote_control back to the tv_cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote_control back to the tv_cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:34.876665+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet",
+      "mineral_water"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the mineral water from the bar counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "source_object": "mineral_water",
+        "target_object": "drink_cup",
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Pour the mineral water into the drink cup."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the filled drink cup back on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the mineral water from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour the mineral water into the drink cup.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3__sim_2",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup back on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_4",
+        "dependencies": [
+          "4_3__sim_3",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:36.415487+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:37.633915+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "notebook",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Place the remote_control back to the tv_cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote_control back to the tv_cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:38.700196+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Place the remote_control back to the tv_cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote_control back to the tv_cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:40.237907+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:41.868681+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:39:44.439746+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:08.800224+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:11.610547+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet",
+      "mineral_water"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the mineral water from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "source_object": "mineral_water",
+        "target_object": "drink_cup",
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Pour the mineral water into the drink cup."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the filled drink cup back on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the mineral water from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour the mineral water into the drink cup.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3__sim_2",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup back on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_4",
+        "dependencies": [
+          "4_3__sim_3",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:13.374948+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:16.245654+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet",
+      "mineral_water"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the mineral water from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "source_object": "mineral_water",
+        "target_object": "drink_cup",
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Pour the mineral water into the drink cup."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the filled drink cup back on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the mineral water from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour the mineral water into the drink cup.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3__sim_2",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup back on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_4",
+        "dependencies": [
+          "4_3__sim_3",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:18.451721+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:21.128912+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet",
+      "mineral_water"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the mineral water from the bar counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "source_object": "mineral_water",
+        "hand_used": null,
+        "dependencies": [
+          1,
+          2
+        ],
+        "description": "Pour the mineral water into the drink cup."
+      },
+      {
+        "step_id": 4,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          3
+        ],
+        "description": "Place the filled drink cup back on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PICK",
+        "target_object": "mineral_water",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the mineral water from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour the mineral water into the drink cup.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3__sim_2",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup back on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_4",
+        "dependencies": [
+          "4_3__sim_3",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:22.749002+00:00",
+    "scan_task_id": "5_1",
+    "scan_location_id": 2,
+    "visible_objects": [
+      "bowl",
+      "notebook",
+      "remote_control",
+      "water_cup"
+    ],
+    "task_description": "Scan the coffee table to identify items. If mineral_water or cola is found, retrieve them to the sink_counter. If not found, skip retrieval. Finally, place the remote_control back to the tv_cabinet.",
+    "post_scan_instruction": "先掃描，掃描後逐項插入後續任務。若看到礦泉水或可樂，逐一收回流理台；若沒看到礦泉水或可樂，跳過此步驟。最後，將遙控器放回電視櫃。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the remote control from the coffee table."
+      },
+      {
+        "step_id": 2,
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Place the remote control back to the tv cabinet."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "remote_control",
+        "location_id": 2,
+        "hand_used": null,
+        "description": "Pick up the remote control from the coffee table.",
+        "estimated_duration": 55,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_1",
+        "dependencies": [
+          "5_1"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "remote_control",
+        "location_id": 1,
+        "hand_used": null,
+        "description": "Place the remote control back to the tv cabinet.",
+        "estimated_duration": 35,
+        "urgency_level": "priority",
+        "urgency_score": 3,
+        "parent_id": 5,
+        "global_id": "5_1__sim_2",
+        "dependencies": [
+          "5_1__sim_1",
+          "5_1"
+        ]
+      }
+    ],
+    "error": null
+  },
+  {
+    "timestamp": "2026-04-20T05:40:24.693802+00:00",
+    "scan_task_id": "4_3",
+    "scan_location_id": 5,
+    "visible_objects": [
+      "drink_cup",
+      "instant_powder_packet",
+      "mineral_water"
+    ],
+    "task_description": "Scan the bar counter (location 5) to check for mineral water. If found, pour into cup; if not, fetch from fridge.",
+    "post_scan_instruction": "Take the cup from the master desk to the bar counter. 先掃描，掃描後逐項插入後續任務。若看到 mineral_water，執行倒水進杯子；若沒看到 mineral_water，執行去冰箱拿礦泉水倒水。最後把滿杯的水送回主臥。",
+    "llm_raw_subtasks": [
+      {
+        "step_id": 1,
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [],
+        "description": "Pick up the drink cup from the bar counter."
+      },
+      {
+        "step_id": 2,
+        "action_type": "POUR",
+        "source_object": "mineral_water",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "dependencies": [
+          1
+        ],
+        "description": "Pour mineral water into the drink cup at the bar counter."
+      },
+      {
+        "step_id": 3,
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "dependencies": [
+          2
+        ],
+        "description": "Place the filled drink cup back on the master desk."
+      }
+    ],
+    "normalized_subtasks": [
+      {
+        "action_type": "PICK",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pick up the drink cup from the bar counter.",
+        "estimated_duration": 55,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_1",
+        "dependencies": [
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "POUR",
+        "target_object": "drink_cup",
+        "location_id": 5,
+        "hand_used": null,
+        "description": "Pour mineral water into the drink cup at the bar counter.",
+        "estimated_duration": 110,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_2",
+        "dependencies": [
+          "4_3__sim_1",
+          "4_3"
+        ]
+      },
+      {
+        "action_type": "PLACE",
+        "target_object": "drink_cup",
+        "location_id": 13,
+        "hand_used": null,
+        "description": "Place the filled drink cup back on the master desk.",
+        "estimated_duration": 35,
+        "urgency_level": "normal",
+        "urgency_score": 0,
+        "parent_id": 4,
+        "global_id": "4_3__sim_3",
+        "dependencies": [
+          "4_3__sim_2",
+          "4_3"
+        ]
+      }
+    ],
+    "error": null
+  }
+]

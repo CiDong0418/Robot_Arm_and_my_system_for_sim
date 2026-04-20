@@ -1,0 +1,105 @@
+[35m🐝 [First LLM Bee] Analyzing global sequence for 26 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: inf
+==========================================
+Iter 10: Best Fitness = inf | accepted=0 rejected_infeasible=400 rejected_not_better=0
+Iter 20: Best Fitness = inf | accepted=0 rejected_infeasible=800 rejected_not_better=0
+Iter 30: Best Fitness = inf | accepted=0 rejected_infeasible=1200 rejected_not_better=0
+Iter 40: Best Fitness = inf | accepted=0 rejected_infeasible=1600 rejected_not_better=0
+Iter 50: Best Fitness = inf | accepted=0 rejected_infeasible=2000 rejected_not_better=0
+Iter 60: Best Fitness = inf | accepted=0 rejected_infeasible=2400 rejected_not_better=0
+Iter 70: Best Fitness = inf | accepted=0 rejected_infeasible=2800 rejected_not_better=0
+Iter 80: Best Fitness = inf | accepted=0 rejected_infeasible=3200 rejected_not_better=0
+Iter 90: Best Fitness = inf | accepted=0 rejected_infeasible=3600 rejected_not_better=0
+Iter 100: Best Fitness = inf | accepted=0 rejected_infeasible=4000 rejected_not_better=0
+[35m🐝 [First LLM Bee] Analyzing global sequence for 26 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: 4984.2
+==========================================
+Iter 10: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=400 rejected_not_better=0
+Iter 20: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=800 rejected_not_better=0
+Iter 30: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=1200 rejected_not_better=0
+Iter 40: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=1600 rejected_not_better=0
+Iter 50: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=2000 rejected_not_better=0
+Iter 60: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=2400 rejected_not_better=0
+Iter 70: Best Fitness = 4984.2 | accepted=0 rejected_infeasible=2800 rejected_not_better=0
+Iter 80: Best Fitness = 4984.2 | accepted=1 rejected_infeasible=3199 rejected_not_better=0
+Iter 90: Best Fitness = 4984.2 | accepted=2 rejected_infeasible=3598 rejected_not_better=0
+Iter 100: Best Fitness = 4984.2 | accepted=2 rejected_infeasible=3998 rejected_not_better=0
+[35m🐝 [First LLM Bee] Analyzing global sequence for 24 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: inf
+==========================================
+Iter 10: Best Fitness = 3379.2000000000003 | accepted=59 rejected_infeasible=0 rejected_not_better=341
+Iter 20: Best Fitness = 3302.6000000000004 | accepted=87 rejected_infeasible=0 rejected_not_better=713
+Iter 30: Best Fitness = 3302.6000000000004 | accepted=129 rejected_infeasible=0 rejected_not_better=1071
+Iter 40: Best Fitness = 3275.4 | accepted=160 rejected_infeasible=0 rejected_not_better=1440
+Iter 50: Best Fitness = 3275.4 | accepted=197 rejected_infeasible=0 rejected_not_better=1803
+Iter 60: Best Fitness = 3275.4 | accepted=225 rejected_infeasible=0 rejected_not_better=2175
+Iter 70: Best Fitness = 3181.8999999999996 | accepted=283 rejected_infeasible=0 rejected_not_better=2517
+Iter 80: Best Fitness = 3181.8999999999996 | accepted=311 rejected_infeasible=0 rejected_not_better=2889
+Iter 90: Best Fitness = 3181.8999999999996 | accepted=339 rejected_infeasible=0 rejected_not_better=3261
+Iter 100: Best Fitness = 3181.8999999999996 | accepted=375 rejected_infeasible=0 rejected_not_better=3625
+[35m🐝 [First LLM Bee] Analyzing global sequence for 45 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: inf
+==========================================
+Iter 10: Best Fitness = inf | accepted=70 rejected_infeasible=330 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.975s time_total=0.975s
+Iter 20: Best Fitness = inf | accepted=96 rejected_infeasible=704 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.939s time_total=1.914s
+Iter 30: Best Fitness = inf | accepted=151 rejected_infeasible=1049 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.875s time_total=2.790s
+Iter 40: Best Fitness = inf | accepted=182 rejected_infeasible=1418 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.908s time_total=3.697s
+Iter 50: Best Fitness = inf | accepted=212 rejected_infeasible=1788 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.904s time_total=4.602s
+Iter 60: Best Fitness = inf | accepted=212 rejected_infeasible=2188 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.924s time_total=5.526s
+Iter 70: Best Fitness = inf | accepted=212 rejected_infeasible=2588 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.915s time_total=6.440s
+Iter 80: Best Fitness = inf | accepted=212 rejected_infeasible=2988 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.926s time_total=7.366s
+Iter 90: Best Fitness = inf | accepted=212 rejected_infeasible=3388 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.983s time_total=8.349s
+Iter 100: Best Fitness = inf | accepted=212 rejected_infeasible=3788 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=1.025s time_total=9.374s
+[35m🐝 [First LLM Bee] Analyzing global sequence for 30 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: 5599.8
+==========================================
+Iter 10: Best Fitness = 5420.2 | accepted=48 rejected_infeasible=352 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.396s time_total=0.396s
+Iter 20: Best Fitness = 5420.2 | accepted=78 rejected_infeasible=722 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.401s time_total=0.796s
+Iter 30: Best Fitness = 5279.7 | accepted=125 rejected_infeasible=1075 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.428s time_total=1.225s
+Iter 40: Best Fitness = 5279.7 | accepted=156 rejected_infeasible=1444 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=1.000 time_10iter=0.406s time_total=1.631s
+Iter 50: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=1826 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.421s time_total=2.052s
+Iter 60: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=2226 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.422s time_total=2.473s
+Iter 70: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=2626 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.409s time_total=2.882s
+Iter 80: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=3026 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.424s time_total=3.306s
+Iter 90: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=3426 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.422s time_total=3.728s
+Iter 100: Best Fitness = 5279.7 | accepted=174 rejected_infeasible=3826 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=0.438s time_total=4.166s
+[35m🐝 [First LLM Bee] Analyzing global sequence for 28 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: inf
+==========================================
+Iter 10: Best Fitness = 6334.5 | accepted=211 rejected_infeasible=189 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=0.997 time_10iter=1.256s time_total=1.256s
+Iter 20: Best Fitness = 5775.3 | accepted=421 rejected_infeasible=379 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=0.997 time_10iter=1.300s time_total=2.556s
+Iter 30: Best Fitness = 5775.3 | accepted=612 rejected_infeasible=588 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=0.993 time_10iter=1.172s time_total=3.728s
+Iter 40: Best Fitness = 5775.3 | accepted=821 rejected_infeasible=779 rejected_not_better=0 phase=phase1_feasibility infeasible_rate_recent=0.993 time_10iter=1.244s time_total=4.972s
+Iter 50: Best Fitness = 5775.3 | accepted=912 rejected_infeasible=1088 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=0.993 time_10iter=1.044s time_total=6.016s
+Iter 60: Best Fitness = 5775.3 | accepted=913 rejected_infeasible=1487 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=0.997 time_10iter=1.149s time_total=7.165s
+Iter 70: Best Fitness = 5775.3 | accepted=913 rejected_infeasible=1887 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=1.023s time_total=8.188s
+Iter 80: Best Fitness = 5775.3 | accepted=917 rejected_infeasible=2283 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=0.987 time_10iter=1.305s time_total=9.493s
+Iter 90: Best Fitness = 5775.3 | accepted=918 rejected_infeasible=2682 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=1.042s time_total=10.536s
+Iter 100: Best Fitness = 5775.3 | accepted=918 rejected_infeasible=3082 rejected_not_better=0 phase=phase2_makespan infeasible_rate_recent=1.000 time_10iter=1.214s time_total=11.750s
+[35m🐝 [First LLM Bee] Analyzing global sequence for 29 tasks...[0m
+[32m🐝 [First LLM Bee] Sequence successfully generated![0m
+==========================================
+🐝 [Baseline] 第 1 隻蜜蜂 (LLM 全域排程) 初始 Fitness: inf
+==========================================
+Iter 10: Best Fitness = 4732.12 | accepted=257 rejected_infeasible=365 rejected_not_better=78 phase=phase1_feasibility infeasible_rate_recent=0.803 time_10iter=9.720s time_total=9.720s
+Iter 20: Best Fitness = 4708.400000000001 | accepted=503 rejected_infeasible=712 rejected_not_better=185 phase=phase1_feasibility infeasible_rate_recent=0.777 time_10iter=2.431s time_total=12.151s
+Iter 30: Best Fitness = 4708.400000000001 | accepted=683 rejected_infeasible=1113 rejected_not_better=304 phase=phase1_feasibility infeasible_rate_recent=0.797 time_10iter=2.320s time_total=14.471s
+Iter 40: Best Fitness = 4579.099999999999 | accepted=982 rejected_infeasible=1446 rejected_not_better=372 phase=phase1_feasibility infeasible_rate_recent=0.863 time_10iter=2.411s time_total=16.882s
+Iter 50: Best Fitness = 4579.099999999999 | accepted=1145 rejected_infeasible=1887 rejected_not_better=468 phase=phase2_makespan infeasible_rate_recent=0.830 time_10iter=2.536s time_total=19.418s
+Iter 60: Best Fitness = 4579.099999999999 | accepted=1168 rejected_infeasible=2491 rejected_not_better=541 phase=phase2_makespan infeasible_rate_recent=0.840 time_10iter=2.301s time_total=21.719s
+Iter 70: Best Fitness = 4447.780000000001 | accepted=1193 rejected_infeasible=3062 rejected_not_better=645 phase=phase2_makespan infeasible_rate_recent=0.787 time_10iter=2.087s time_total=23.806s
+Iter 80: Best Fitness = 4447.780000000001 | accepted=1227 rejected_infeasible=3625 rejected_not_better=748 phase=phase2_makespan infeasible_rate_recent=0.810 time_10iter=2.189s time_total=25.995s
+Iter 90: Best Fitness = 4447.780000000001 | accepted=1274 rejected_infeasible=4153 rejected_not_better=873 phase=phase2_makespan infeasible_rate_recent=0.753 time_10iter=2.215s time_total=28.210s
+Iter 100: Best Fitness = 4447.780000000001 | accepted=1303 rejected_infeasible=4700 rejected_not_better=997 phase=phase2_makespan infeasible_rate_recent=0.763 time_10iter=2.278s time_total=30.489s

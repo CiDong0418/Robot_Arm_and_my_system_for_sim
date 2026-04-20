@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC   -shared -Wl,-soname,libMotorUnion.so -o libMotorUnion.so CMakeFiles/MotorUnion.dir/MotorUnion.cpp.o  -Wl,-rpath,/home/aiRobots/Software/build/MotorUnion/Motor:/home/aiRobots/Software/build/MotorUnion/Motor/dynamixel:/home/aiRobots/Software/build/MotorUnion/Motor/motor Motor/libDMotor.so Motor/dynamixel/libDynamixelSdk.so Motor/motor/libmotor.so 
